@@ -25,9 +25,3 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
-
-# Hallmark working files (snapshots hold demo data only)
-.hallmark/snapshots-before/
-.hallmark/snapshots-after/
-.hallmark/before-static.txt
-.hallmark/cookies.txt

@@ -38,15 +38,14 @@ The planning document leaves some details open. The implementation settles them 
 | User management | Administrators can add users, edit name/username/position/role, deactivate accounts, and reset passwords. Administrators cannot remove their own Administrator role or deactivate themselves. | Section 10 (Authentication and User Management). |
 | Validation | Required: resident name, address, purok; request resident, category, description, document check, date received (not in the future); follow-up date, plus a note unless the status changes. Resident contact number is optional. | NFR Reliability ("validate required fields before saving"). |
 | Deleting records | Residents, requests, and history entries cannot be deleted in the application, so the records stay intact. Inactive staff accounts are deactivated, not deleted. | NFR Reliability ("preserving successfully stored request records"). |
-| Dashboard figures | Pending Requests, In Progress, Completed Today (completed on today's date), Total Residents, set as a ruled strip of figures (each links to the list it counts, except Completed Today), plus the five most recent requests. | Dashboard wireframe; the four pastel cards with coloured dots were recomposed in the Hallmark redesign. |
+| Dashboard cards | Pending Requests, In Progress, Completed Today (completed on today's date), Total Residents, plus the five most recent requests. | Dashboard wireframe. |
 | Phone use | The system is a **responsive website**, not a separate mobile app. Staff open it in Chrome on their phone. On phones the sidebar becomes a slide-out menu (☰), tables show only the key columns, and forms open full screen. There is no app-store app, installable web app, or offline mode. | NFR Responsiveness and Usability; the planning document's stack (Blade, HTML/CSS/Bootstrap). Chosen by the project team as the lowest-cost way to allow phone access. |
-| Readability | Body text is 16px and the smallest text 14px; every text colour meets WCAG AA contrast; whole table rows open their record, so phones have large tap targets. | Usability ("Readable text", "Accessibility"); NFR Usability (varying computer familiarity). |
-| Visual design | The interface follows a design system built with the Hallmark skill (Almanac theme): slate paper, records set on pale "printed sheets" with ruled tables, Hanken Grotesk headings, Newsreader text, IBM Plex Mono figures and reference numbers, square corners, and the **barangay green** as the one accent and the sidebar colour. Fonts are bundled with the app, so they work without internet. Colours and fonts live only in `resources/css/tokens.css`. | Redesign requested by the project team ("trustworthy and neat, less corporate"). It keeps every field, workflow and screen from the wireframes but **no longer copies their visual look** (pastel cards, coloured dots, all-caps labels). |
+| Readability | Smallest text is 13px, secondary grey text meets WCAG AA contrast (`#5a675e`, about 5.8:1), and whole table rows open their record, so phones have large tap targets. | Usability ("Readable text", "Accessibility"); NFR Usability (varying computer familiarity). |
 | Reports | Defaults to the current month. Filters: Date From/To (on date received), Category, Status. Shows totals, a by-category breakdown, and the matching requests, and can be printed from the browser. | Reports wireframe, FR-08. |
 
 ## Wireframe and frontend guidance
 
-Use the supplied planning document’s interface wireframes and navigation plan as the reference for **screens, fields, and workflows**. The **visual style** (colours, type, spacing) comes from the design system in `resources/css/tokens.css` and `resources/css/app.css`, not from the wireframe images; see *Visual design* in the decisions table above.
+Use the supplied planning document’s interface wireframes and navigation plan as the design reference for frontend and workflow changes:
 
 1. Staff login with username and password.
 2. Dashboard emphasizing pending work, request counts, recent requests, and shortcuts.
@@ -61,8 +60,7 @@ Keep the navigation centered on Dashboard, Residents, Service Requests and reque
 ## Tech stack
 
 - PHP 8.3 or later and Laravel 13.
-- Blade, HTML, CSS, and Bootstrap 5 (with Bootstrap Icons) for the interface, as specified in the planning document. Tailwind CSS from the Laravel starter was removed to match the document. Bootstrap is restyled through the design tokens in `resources/css/tokens.css`.
-- Fonts (Hanken Grotesk, Newsreader, IBM Plex Mono) are downloaded at build time and served by the app itself (`vite.config.js`), so pages keep their type when the office internet is down.
+- Blade, HTML, CSS, and Bootstrap 5 (with Bootstrap Icons) for the interface, as specified in the planning document. Tailwind CSS from the Laravel starter was removed to match the document.
 - MySQL for persistent application data. The automated tests use an in-memory SQLite database.
 - Vite and the Laravel Vite plugin bundle the CSS and JavaScript.
 - Laravel Boost (development only) provides AI-assistant guidelines in `AGENTS.md` and `CLAUDE.md`.

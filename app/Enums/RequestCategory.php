@@ -34,4 +34,16 @@ enum RequestCategory: string
             self::AssistanceReferral => 'Assistance',
         };
     }
+
+    /**
+     * Bar color used on the reports board.
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::CertificateClearance => '#a78bfa',
+            self::Complaint => '#f2607a',
+            self::AssistanceReferral => '#2e7d32',
+        };
+    }
 }

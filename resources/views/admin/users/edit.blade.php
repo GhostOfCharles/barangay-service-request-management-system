@@ -4,18 +4,14 @@
 
 @section('content')
     <div class="mb-3">
-        <a href="{{ route('admin.users.index') }}" class="back-link"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to User Management</a>
+        <a href="{{ route('admin.users.index') }}" class="small text-secondary"><i class="bi bi-arrow-left"></i> Back to User Management</a>
     </div>
 
-    <div class="col-lg-6">
-        <div class="page-head">
-            <div>
-                <h1 class="page-title">Edit User</h1>
-                <p class="page-subtitle mb-0">{{ $user->username }}</p>
-            </div>
-        </div>
+    <div class="col-lg-5">
+        <h1 class="page-title">Edit User</h1>
+        <p class="page-subtitle">{{ $user->username }}</p>
 
-        <div class="panel panel-body">
+        <div class="panel p-4">
             <form method="POST" action="{{ route('admin.users.update', $user) }}" novalidate>
                 @csrf
                 @method('PUT')
