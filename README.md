@@ -1,71 +1,72 @@
-> **First time setting up this project?** We use MySQL for this project. Install and start MySQL, create a database, then update the `DB_*` settings in your `.env` file (`DB_CONNECTION=mysql`, host, port, database name, username, and password). From the project folder, run:
->
-> ```bash
-> composer run setup
-> ```
->
-> This installs dependencies, creates your local environment, generates an app key, runs migrations against your MySQL database, and builds assets. Then start the app with:
->
-> ```bash
-> composer run dev
-> ```
->
-> Open the local URL shown in the terminal (usually http://127.0.0.1:8000).
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Community Service Request Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+An internal web application planned for Barangay San Rafael to help authorized personnel manage resident records and service requests in one place. The project is based on the supplied planning and design document; it is a student-developed system and does not claim official barangay adoption or production deployment.
 
-## About Laravel
+## Project overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+The system is intended to reduce reliance on separate paper logbooks, folders, spreadsheets, and personal notes. Its central record is a service request associated with a resident. Staff can record the request, track its status, log follow-up actions, search previous records, and use basic reports to monitor work.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+The planned roles are **Administrator** and **Staff**. Residents are recorded as requesters and do not need application accounts. Certificate and clearance requests, complaints, and community assistance or referrals use the same request workflow as categories.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Planned MVP scope
 
-## Learning Laravel
+- Authenticated access with role-based permissions and administrator-only user management.
+- Resident records with name, address, contact details, and purok, reusable across requests.
+- Service request intake with resident, category, description, document-check information, and date received.
+- Request status tracking and follow-up actions kept with the request history.
+- Search and filtering for resident and request records.
+- A dashboard for request counts, pending work, and recent transactions.
+- Basic reports filtered by date range, category, and status, including total, pending, in-progress, and completed requests.
+- Paper records and signatures remain in use wherever required.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Out of scope for the MVP: resident accounts or a public portal, digital signatures, online payments, SMS/email notification infrastructure, advanced analytics, accounting/payroll, unrelated municipal systems, specialized hardware, and guaranteed operation during internet outages. The planning document does not specify detailed validation rules, retention periods, or deployment arrangements; confirm these with the project team before implementing them as requirements.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Wireframe and frontend guidance
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Use the supplied planning document’s interface wireframes and navigation plan as the design reference for frontend and workflow changes:
 
-## Agentic Development
+1. Staff login with username and password.
+2. Dashboard emphasizing pending work, request counts, recent requests, and shortcuts.
+3. Searchable/filterable resident and request list.
+4. Add-resident form or modal for name, address, contact, and purok.
+5. Service request form or modal for resident, category, description, document-check status, and date received.
+6. Reports board with date-from/date-to, category, and status filters and request totals.
+7. Logout confirmation available from application boards.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Keep the navigation centered on Dashboard, Residents, Service Requests and request details, Reports, and Logout. Show user-management controls only to Administrators. Follow the wireframes’ intent and documented fields; do not add unrequested workflows or imply that a wireframe alone defines unspecified business rules.
 
-```bash
-composer require laravel/boost --dev
+## Tech stack
 
-php artisan boost:install
-```
+- PHP 8.3 or later and Laravel 13.
+- Blade, HTML, CSS, and Bootstrap for the interface, as specified in the planning document.
+- MySQL for persistent application data.
+- Vite, Tailwind CSS 4, and the Laravel Vite plugin are present in the current frontend package configuration.
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+The repository currently contains the Laravel starter structure; the planned application features above should not be assumed to be implemented yet.
 
-## Contributing
+## Local setup
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Prerequisites: PHP 8.3+, Composer, Node.js/npm, and a running MySQL server.
 
-## Code of Conduct
+1. Clone the repository and open its project folder.
+2. Create a local MySQL database.
+3. Copy `.env.example` to `.env` if setup has not already created it. Set `DB_CONNECTION=mysql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` for your local MySQL instance.
+4. Install and initialize the application:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+   ```bash
+   composer run setup
+   ```
 
-## Security Vulnerabilities
+   This installs PHP and JavaScript dependencies, creates the app key, runs migrations, and builds frontend assets. It does not create the MySQL database itself.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+5. Start local development:
 
-## License
+   ```bash
+   composer run dev
+   ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+   Open the local URL printed in the terminal. This Laravel dev command starts the web server, queue listener, and Vite. To run only the web server, use `php artisan serve` and run `npm run dev` separately when working on frontend assets.
+
+## Project requirements
+
+The requirements source is [`documents/COMMUNITY SERVICE REQUEST MANAGEMENT SYSTEM.docx`](documents/COMMUNITY%20SERVICE%20REQUEST%20MANAGEMENT%20SYSTEM.docx). It includes wireframes; developers should follow them as the reference for the frontend layout and documented workflows. Treat the document as the project scope. If a wireframe or requirement is unclear or conflicts with the existing application, call out the issue and ask for direction instead of inventing a requirement.
