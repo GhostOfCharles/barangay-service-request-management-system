@@ -2,24 +2,34 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
+     *
+     * Creates the first Administrator account. Its temporary password is "password"
+     * and must be changed on first login. Demo records are added only in the local environment.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        User::firstOrCreate(
+            ['username' => 'admin'],
+            [
+                'name' => 'System Administrator',
+                'role' => UserRole::Admin,
+                'position' => 'Administrator',
+                'is_active' => true,
+                'must_change_password' => true,
+                'password' => 'password',
+            ],
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        if (app()->isLocal()) {
+            $this->call(DemoDataSeeder::class);
+        }
     }
 }

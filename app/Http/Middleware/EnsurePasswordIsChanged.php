@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+/**
+ * Forces a password change after logging in with a temporary password (FR-01 flow).
+ */
+class EnsurePasswordIsChanged
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        if ($request->user()?->must_change_password) {
+            return redirect()->route('password.edit');
+        }
+
+        return $next($request);
+    }
+}
