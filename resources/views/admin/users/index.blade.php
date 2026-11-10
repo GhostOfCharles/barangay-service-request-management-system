@@ -3,20 +3,20 @@
 @section('title', 'User Management')
 
 @section('content')
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div class="page-head">
         <div>
             <h1 class="page-title">User Management</h1>
             <p class="page-subtitle mb-0">Administrator and Staff accounts that can log in to the system</p>
         </div>
         <div class="page-actions">
-            <a href="{{ route('admin.users.create') }}" class="btn btn-success"><i class="bi bi-plus-lg"></i> Add User</a>
+            <a href="{{ route('admin.users.create') }}" class="btn btn-success"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add User</a>
         </div>
     </div>
 
     @if ($temporary = session('temporaryPassword'))
-        <div class="alert alert-warning">
-            <div class="fw-semibold mb-1"><i class="bi bi-key"></i> Temporary password for <span class="font-monospace">{{ $temporary['username'] }}</span></div>
-            <div class="font-monospace fs-5 mb-1">{{ $temporary['password'] }}</div>
+        <div class="alert alert-warning d-block" role="status">
+            <div class="fw-semibold mb-1"><i class="bi bi-key" aria-hidden="true"></i> Temporary password for <span class="font-monospace">{{ $temporary['username'] }}</span></div>
+            <div class="secret mb-1">{{ $temporary['password'] }}</div>
             <div class="small">Give this to the user privately. It is shown only once, and they must change it after logging in.</div>
         </div>
     @endif
@@ -37,21 +37,21 @@
                 <tbody>
                 @foreach ($users as $user)
                     <tr>
-                        <td class="fw-medium">
+                        <td class="row-name">
                             {{ $user->name }}
-                            <div class="cell-sub d-md-none"><span class="font-monospace">{{ $user->username }}</span><span class="d-sm-none"> · {{ $user->role->label() }}</span></div>
+                            <div class="cell-sub d-md-none"><span class="font-monospace">{{ $user->username }}</span><span class="d-sm-none">{{ $user->role->label() }}</span></div>
                         </td>
                         <td class="font-monospace small d-none d-md-table-cell">{{ $user->username }}</td>
-                        <td class="d-none d-lg-table-cell">{{ $user->position ?? '—' }}</td>
+                        <td class="d-none d-lg-table-cell">{{ $user->position ?? 'None' }}</td>
                         <td class="d-none d-sm-table-cell">{{ $user->role->label() }}</td>
                         <td>
                             @if ($user->is_active)
-                                <span class="badge text-bg-success">Active</span>
+                                <span class="chip chip-active">Active</span>
                             @else
-                                <span class="badge text-bg-secondary">Inactive</span>
+                                <span class="chip chip-inactive">Inactive</span>
                             @endif
                             @if ($user->must_change_password)
-                                <span class="badge text-bg-warning">Temporary password</span>
+                                <span class="chip chip-warning">Temporary password</span>
                             @endif
                         </td>
                         <td class="text-end">

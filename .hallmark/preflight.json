@@ -1,0 +1,23 @@
+{
+  "scanned": "2026-11-10",
+  "findings": {
+    "fonts": "Inter via laravel-vite-plugin bunny() (vite.config.js L10-14), system-ui fallback (resources/css/app.css :root)",
+    "palette": "Bootstrap 5.3 defaults plus --brgy-green #2e7d32, --brgy-sidebar #1e5a24, --brgy-bg, --brgy-border, --brgy-muted (resources/css/app.css :root); 57 colour literals outside tokens",
+    "motion": "Bootstrap fade/offcanvas transitions only; no motion library (package.json)",
+    "spacing": "Bootstrap 5 spacing utilities",
+    "framework": "Laravel 13 Blade + Vite 8, Bootstrap 5.3.8, Bootstrap Icons 1.13 (package.json)"
+  },
+  "preserve": ["Bootstrap 5 + Blade + Vite stack", "every route, form field, name, id, data-* hook", "barangay green as the brand accent (pending owner answer)"],
+  "introduce": ["Hallmark tokens and base", "app-scope type scale", "restrained colour", "states on every control", "recomposed screens"],
+  "pages": [
+    {"route": "/login", "file": "resources/views/auth/login.blade.php", "kind": "page (sign-in)"},
+    {"route": "/dashboard", "file": "resources/views/dashboard.blade.php", "kind": "app screen"},
+    {"route": "/residents", "file": "resources/views/residents/index.blade.php", "kind": "app screen"},
+    {"route": "/residents/{id}", "file": "resources/views/residents/show.blade.php", "kind": "app screen"},
+    {"route": "/service-requests", "file": "resources/views/service-requests/index.blade.php", "kind": "app screen"},
+    {"route": "/service-requests/{id}", "file": "resources/views/service-requests/show.blade.php", "kind": "app screen"},
+    {"route": "/reports", "file": "resources/views/reports/index.blade.php", "kind": "app screen"},
+    {"route": "/admin/users*", "file": "resources/views/admin/users/*.blade.php", "kind": "app screen"},
+    {"route": "/password, /forgot-password", "file": "resources/views/auth/*.blade.php", "kind": "page (account)"}
+  ]
+}

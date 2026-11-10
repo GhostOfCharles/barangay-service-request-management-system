@@ -4,14 +4,18 @@
 
 @section('content')
     <div class="mb-3">
-        <a href="{{ route('admin.users.index') }}" class="small text-secondary"><i class="bi bi-arrow-left"></i> Back to User Management</a>
+        <a href="{{ route('admin.users.index') }}" class="back-link"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to User Management</a>
     </div>
 
-    <div class="col-lg-5">
-        <h1 class="page-title">Add User</h1>
-        <p class="page-subtitle">A temporary password will be generated. The user must change it on first login.</p>
+    <div class="col-lg-6">
+        <div class="page-head">
+            <div>
+                <h1 class="page-title">Add User</h1>
+                <p class="page-subtitle mb-0">A temporary password will be generated. The user must change it on first login.</p>
+            </div>
+        </div>
 
-        <div class="panel p-4">
+        <div class="panel panel-body">
             <form method="POST" action="{{ route('admin.users.store') }}" novalidate>
                 @csrf
                 @include('admin.users._form-fields')

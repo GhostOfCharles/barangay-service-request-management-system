@@ -5,20 +5,20 @@
 
 @section('content')
     <div class="mb-3">
-        <a href="{{ route('service-requests.index') }}" class="small text-secondary"><i class="bi bi-arrow-left"></i> Back to Service Requests</a>
+        <a href="{{ route('service-requests.index') }}" class="back-link"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to Service Requests</a>
     </div>
 
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div class="page-head">
         <div>
-            <h1 class="page-title">
-                Request <span class="ref-no fs-6">{{ $serviceRequest->reference_no }}</span>
+            <h1 class="page-title">Request {{ $serviceRequest->reference_no }}</h1>
+            <p class="page-subtitle mb-0">
                 <x-status-badge :status="$serviceRequest->status" />
-            </h1>
-            <p class="page-subtitle mb-0">{{ $serviceRequest->category->label() }} · Received {{ $serviceRequest->date_received->format('M j, Y') }}</p>
+                {{ $serviceRequest->category->label() }}, received {{ $serviceRequest->date_received->format('M j, Y') }}
+            </p>
         </div>
         <div class="page-actions">
-            <button type="button" class="btn btn-outline-secondary bg-white" data-bs-toggle="modal" data-bs-target="#editRequestModal">
-                <i class="bi bi-pencil"></i> Edit Details
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editRequestModal">
+                <i class="bi bi-pencil" aria-hidden="true"></i> Edit Details
             </button>
         </div>
     </div>
@@ -27,30 +27,30 @@
         <div class="col-lg-5">
             <div class="panel mb-3">
                 <div class="panel-header">Request Information</div>
-                <dl class="row mb-0 p-3 small">
-                    <dt class="col-5 text-secondary fw-normal">Resident</dt>
-                    <dd class="col-7"><a href="{{ route('residents.show', $serviceRequest->resident) }}" class="fw-medium">{{ $serviceRequest->resident->name }}</a></dd>
+                <dl class="facts panel-body">
+                    <dt>Resident</dt>
+                    <dd><a href="{{ route('residents.show', $serviceRequest->resident) }}" >{{ $serviceRequest->resident->name }}</a></dd>
 
-                    <dt class="col-5 text-secondary fw-normal">Address</dt>
-                    <dd class="col-7">{{ $serviceRequest->resident->address }}</dd>
+                    <dt>Address</dt>
+                    <dd>{{ $serviceRequest->resident->address }}</dd>
 
-                    <dt class="col-5 text-secondary fw-normal">Contact</dt>
-                    <dd class="col-7">{{ $serviceRequest->resident->contact_number ?? '—' }}</dd>
+                    <dt>Contact</dt>
+                    <dd>{{ $serviceRequest->resident->contact_number ?? 'None' }}</dd>
 
-                    <dt class="col-5 text-secondary fw-normal">Category</dt>
-                    <dd class="col-7">{{ $serviceRequest->category->label() }}</dd>
+                    <dt>Category</dt>
+                    <dd>{{ $serviceRequest->category->label() }}</dd>
 
-                    <dt class="col-5 text-secondary fw-normal">Description</dt>
-                    <dd class="col-7" style="white-space: pre-line;">{{ $serviceRequest->description }}</dd>
+                    <dt>Description</dt>
+                    <dd class="multiline">{{ $serviceRequest->description }}</dd>
 
-                    <dt class="col-5 text-secondary fw-normal">Document Check</dt>
-                    <dd class="col-7">{{ $serviceRequest->document_status->label() }}</dd>
+                    <dt>Document Check</dt>
+                    <dd>{{ $serviceRequest->document_status->label() }}</dd>
 
-                    <dt class="col-5 text-secondary fw-normal">Date Received</dt>
-                    <dd class="col-7">{{ $serviceRequest->date_received->format('M j, Y') }}</dd>
+                    <dt>Date Received</dt>
+                    <dd>{{ $serviceRequest->date_received->format('M j, Y') }}</dd>
 
-                    <dt class="col-5 text-secondary fw-normal">Recorded By</dt>
-                    <dd class="col-7 mb-0">{{ $serviceRequest->creator->name }}</dd>
+                    <dt>Recorded By</dt>
+                    <dd>{{ $serviceRequest->creator->name }}</dd>
                 </dl>
             </div>
 
@@ -60,11 +60,11 @@
             {{-- On phones the history comes first, then the form; on desktop the form is on top. --}}
             <div class="panel mb-3 order-2 order-lg-1" id="add-update">
                 <div class="panel-header">Add Follow-up / Update Status</div>
-                <form method="POST" action="{{ route('service-requests.follow-ups', $serviceRequest) }}" class="p-3" novalidate>
+                <form method="POST" action="{{ route('service-requests.follow-ups', $serviceRequest) }}" class="panel-body" novalidate>
                     @csrf
                     <div class="row g-3 mb-3">
                         <div class="col-sm-6">
-                            <label for="action_date" class="form-label small">Date</label>
+                            <label for="action_date" class="form-label">Date</label>
                             <input type="date" id="action_date" name="action_date" max="{{ today()->toDateString() }}"
                                    value="{{ old('action_date', today()->toDateString()) }}"
                                    class="form-control @error('action_date', 'addUpdate') is-invalid @enderror" required>
@@ -73,7 +73,7 @@
                             @enderror
                         </div>
                         <div class="col-sm-6">
-                            <label for="update-status" class="form-label small">Change status to <span class="text-secondary">(optional)</span></label>
+                            <label for="update-status" class="form-label">Change status to <span class="text-secondary">(optional)</span></label>
                             <select id="update-status" name="status" class="form-select @error('status', 'addUpdate') is-invalid @enderror">
                                 <option value="">Keep as {{ $serviceRequest->status->label() }}</option>
                                 @foreach ($statuses as $status)
@@ -87,7 +87,7 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="update-note" class="form-label small">Action taken / note</label>
+                        <label for="update-note" class="form-label">Action taken / note</label>
                         <textarea id="update-note" name="note" rows="3" class="form-control @error('note', 'addUpdate') is-invalid @enderror"
                                   placeholder="e.g. Called the resident to submit a valid ID.">{{ old('note') }}</textarea>
                         <div class="form-text">Required when the status stays the same.</div>
@@ -101,14 +101,14 @@
 
             <div class="panel mb-3 order-1 order-lg-2">
                 <div class="panel-header">Request History</div>
-                <div class="p-3">
+                <div class="panel-body">
                     <ul class="timeline">
                         @foreach ($serviceRequest->updates as $update)
                             <li>
-                                <div class="small text-secondary">
-                                    {{ $update->action_date->format('M j, Y') }} · {{ $update->user->name }}
+                                <div class="timeline-meta">
+                                    <time datetime="{{ $update->action_date->toDateString() }}">{{ $update->action_date->format('M j, Y') }}</time>, by {{ $update->user->name }}
                                 </div>
-                                <div class="fw-medium">
+                                <div class="timeline-event">
                                     @switch($update->type)
                                         @case(\App\Enums\RequestUpdateType::Created)
                                             Request recorded as <x-status-badge :status="$update->to_status" />
@@ -121,7 +121,7 @@
                                     @endswitch
                                 </div>
                                 @if ($update->note && $update->type !== \App\Enums\RequestUpdateType::Created)
-                                    <div class="small mt-1" style="white-space: pre-line;">{{ $update->note }}</div>
+                                    <div class="timeline-note">{{ $update->note }}</div>
                                 @endif
                             </li>
                         @endforeach
@@ -140,7 +140,7 @@
                     @csrf
                     @method('PUT')
                     <div class="modal-body p-4">
-                        <h2 class="h6 fw-bold mb-3" id="editRequestModalLabel">Edit Request Details</h2>
+                        <h2 class="mb-3" id="editRequestModalLabel">Edit Request Details</h2>
                         <p class="small text-secondary">Resident: <strong>{{ $serviceRequest->resident->name }}</strong></p>
                         @include('service-requests._form-fields', ['bag' => 'updateRequest', 'serviceRequest' => $serviceRequest])
                         <div class="d-flex gap-2">
