@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\EnsureAccountIsActive;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,10 @@ class LoginController extends Controller
         return view('auth.login');
     }
 
+    /**
+     * One login page for all three roles (FR-01): check the credentials, then that the account is active,
+     * then send each role to its own dashboard.
+     */
     public function store(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
@@ -22,19 +27,28 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt([...$credentials, 'is_active' => true])) {
+        if (! Auth::attempt($credentials)) {
             return back()
                 ->withInput($request->only('username'))
-                ->withErrors(['username' => 'The username or password is incorrect, or the account is inactive.']);
+                ->withErrors(['username' => 'The username or password is incorrect.']);
+        }
+
+        $user = $request->user();
+
+        if (! $user->isActive()) {
+            $message = EnsureAccountIsActive::inactiveMessage($user);
+            Auth::logout();
+
+            return back()->withInput($request->only('username'))->withErrors(['username' => $message]);
         }
 
         $request->session()->regenerate();
 
-        if ($request->user()->must_change_password) {
+        if ($user->must_change_password) {
             return redirect()->route('password.edit');
         }
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->intended(route('home'));
     }
 
     /**

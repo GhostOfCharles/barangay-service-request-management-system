@@ -8,16 +8,16 @@
 </head>
 <body>
 <div class="login-wrap">
-    <div style="width: 100%; max-width: 360px;">
+    <div style="width: 100%; max-width: @yield('width', '400px');">
         <div class="text-center mb-4">
             <div class="login-logo"><i class="bi bi-building"></i></div>
             <h1 class="h4 fw-bold mb-1">Barangay San Rafael</h1>
-            <p class="text-secondary mb-0">Service Request Management System</p>
+            <p class="text-secondary mb-0">Community Service Request Management System</p>
         </div>
 
         @yield('content')
 
-        <p class="text-center text-secondary small mt-4 mb-0">Brgy. San Rafael · Internal Use Only</p>
+        <p class="text-center text-secondary small mt-4 mb-0">@yield('footnote', 'Brgy. San Rafael · Barangay hall records system')</p>
     </div>
 </div>
 </body>

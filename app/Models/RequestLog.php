@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
+use App\Enums\LogEntryType;
 use App\Enums\RequestStatus;
-use App\Enums\RequestUpdateType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * One entry in a service request history: creation, status change, or follow-up action.
+ * One entry in a request's chronological log: a status change or a follow-up note (FR-04, FR-05).
  */
-#[Fillable(['user_id', 'type', 'from_status', 'to_status', 'action_date', 'note'])]
-class RequestUpdate extends Model
+#[Fillable(['user_id', 'entry_type', 'old_status', 'new_status', 'note'])]
+class RequestLog extends Model
 {
     /**
      * Get the attributes that should be cast.
@@ -22,10 +22,9 @@ class RequestUpdate extends Model
     protected function casts(): array
     {
         return [
-            'type' => RequestUpdateType::class,
-            'from_status' => RequestStatus::class,
-            'to_status' => RequestStatus::class,
-            'action_date' => 'date',
+            'entry_type' => LogEntryType::class,
+            'old_status' => RequestStatus::class,
+            'new_status' => RequestStatus::class,
         ];
     }
 

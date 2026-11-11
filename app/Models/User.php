@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Enums\AccountStatus;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'username', 'role', 'position', 'is_active', 'must_change_password', 'password'])]
+#[Fillable(['name', 'username', 'role', 'status', 'position', 'must_change_password', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -27,14 +29,42 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
             'role' => UserRole::class,
-            'is_active' => 'boolean',
+            'status' => AccountStatus::class,
             'must_change_password' => 'boolean',
         ];
     }
 
-    public function isAdmin(): bool
+    /**
+     * The resident record of a resident account.
+     *
+     * @return HasOne<Resident, $this>
+     */
+    public function resident(): HasOne
     {
-        return $this->role === UserRole::Admin;
+        return $this->hasOne(Resident::class);
+    }
+
+    public function isAdministrator(): bool
+    {
+        return $this->role === UserRole::Administrator;
+    }
+
+    public function isResident(): bool
+    {
+        return $this->role === UserRole::Resident;
+    }
+
+    /**
+     * Administrator or Staff: the people who process requests.
+     */
+    public function isPersonnel(): bool
+    {
+        return $this->role->isPersonnel();
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === AccountStatus::Active;
     }
 
     /**

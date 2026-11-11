@@ -1,8 +1,8 @@
 /**
- * Searchable resident field for the New Service Request form.
+ * Searchable Resident field for the staff-assisted Add New Service Request form (Screen 11).
  *
- * Staff type part of a name, purok, or contact number and pick from the matches.
- * "New resident" swaps the field for inline resident inputs, so the request form is never left.
+ * Staff type part of a name, purok, or contact number and pick from the matches. A resident who is
+ * not on file is added first on the Residents page (Screen 8).
  */
 
 const MAX_MATCHES = 8;
@@ -29,10 +29,7 @@ export function initResidentPicker(root) {
     const searchInput = root.querySelector('[data-resident-search]');
     const residentIdInput = root.querySelector('[data-resident-id]');
     const optionsList = root.querySelector('[data-resident-options]');
-    const newFlagInput = root.querySelector('[data-new-flag]');
-    const existingSection = root.querySelector('[data-existing-section]');
-    const newSection = root.querySelector('[data-new-section]');
-    const newResidentName = root.querySelector('[data-new-resident-name]');
+    const addResidentUrl = root.dataset.addResidentUrl;
 
     let matches = [];
     let activeIndex = -1;
@@ -68,27 +65,6 @@ export function initResidentPicker(root) {
         close();
     }
 
-    function showNewResident() {
-        newFlagInput.value = '1';
-        existingSection.classList.add('d-none');
-        newSection.classList.remove('d-none');
-
-        // Carry over what staff already typed, unless it was a chosen resident.
-        if (!residentIdInput.value && searchInput.value.trim() && !newResidentName.value) {
-            newResidentName.value = searchInput.value.trim();
-        }
-
-        close();
-        newResidentName.focus();
-    }
-
-    function showExistingResident() {
-        newFlagInput.value = '0';
-        newSection.classList.add('d-none');
-        existingSection.classList.remove('d-none');
-        searchInput.focus();
-    }
-
     function render() {
         const query = searchInput.value.trim().toLowerCase();
         matches = residents
@@ -113,22 +89,21 @@ export function initResidentPicker(root) {
             }
 
             onPress(option, () => choose(resident));
-
             optionsList.append(option);
         });
 
         if (matches.length === 0) {
             const empty = document.createElement('li');
             empty.className = 'list-group-item small';
-            empty.textContent = 'No resident found. ';
+            empty.textContent = 'No verified resident found. ';
 
-            const addButton = document.createElement('button');
-            addButton.type = 'button';
-            addButton.className = 'btn btn-link btn-sm p-0 align-baseline';
-            addButton.textContent = `Add "${searchInput.value.trim()}" as a new resident`;
-            onPress(addButton, showNewResident);
+            if (addResidentUrl) {
+                const link = document.createElement('a');
+                link.href = addResidentUrl;
+                link.textContent = 'Add the resident first';
+                empty.append(link, '.');
+            }
 
-            empty.append(addButton);
             optionsList.append(empty);
         }
 
@@ -173,7 +148,4 @@ export function initResidentPicker(root) {
             close();
         }
     });
-
-    root.querySelector('[data-show-new]').addEventListener('click', showNewResident);
-    root.querySelector('[data-show-existing]').addEventListener('click', showExistingResident);
 }

@@ -13,10 +13,17 @@ return new class extends Migration
     {
         Schema::create('residents', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->index();
+            $table->foreignId('user_id')->nullable()->unique()->constrained()->nullOnDelete();
+            $table->string('full_name')->index();
             $table->string('address');
+            $table->string('purok', 50)->index();
             $table->string('contact_number', 20)->nullable()->index();
-            $table->string('purok', 50);
+            $table->string('valid_id_path')->nullable();
+            $table->string('verification_status', 20)->default('pending')->index();
+            $table->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('verified_at')->nullable();
+            $table->string('rejection_reason')->nullable();
+            $table->timestamp('privacy_consent_at')->nullable();
             $table->timestamps();
         });
     }

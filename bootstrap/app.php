@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsurePasswordIsChanged;
+use App\Http\Middleware\EnsureRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,12 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(fn () => route('login'));
-        $middleware->redirectUsersTo(fn () => route('dashboard'));
+        $middleware->redirectUsersTo(fn () => route('home'));
 
         $middleware->appendToGroup('web', EnsureAccountIsActive::class);
 
         $middleware->alias([
             'password.changed' => EnsurePasswordIsChanged::class,
+            'role' => EnsureRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

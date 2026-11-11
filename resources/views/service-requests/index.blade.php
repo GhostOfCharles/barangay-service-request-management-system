@@ -3,54 +3,45 @@
 @section('title', 'Service Requests')
 @section('reopenModal', ($errors->createRequest->any() || request()->boolean('new')) ? 'newRequestModal' : '')
 
-@php
-    $activeStatus = $filters['status'] ?? null;
-    $baseFilters = array_filter(\Illuminate\Support\Arr::except($filters, 'status'));
-@endphp
-
 @section('content')
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
         <div>
             <h1 class="page-title">Service Requests</h1>
-            <p class="page-subtitle mb-0">{{ $totalRequests }} total {{ Str::plural('request', $totalRequests) }}</p>
+            <p class="page-subtitle mb-0">Search and filter all requests · {{ $totalRequests }} total</p>
         </div>
         <div class="page-actions">
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newRequestModal">
-                <i class="bi bi-plus-lg"></i> New Service Request
+                <i class="bi bi-plus-lg"></i> Add New Service Request
             </button>
         </div>
     </div>
 
+    {{-- Search by reference number or name; filter by service type, status, and date (FR-06). --}}
     <form method="GET" action="{{ route('service-requests.index') }}" class="filter-bar d-flex flex-wrap align-items-center gap-2 mb-3" role="search">
-        @if ($activeStatus)
-            <input type="hidden" name="status" value="{{ $activeStatus }}">
-        @endif
-
-        <div class="input-group" style="max-width: 240px;">
+        <div class="input-group" style="max-width: 280px;">
             <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
             <input type="search" name="search" value="{{ $filters['search'] ?? '' }}" class="form-control border-start-0"
-                   placeholder="Search resident or ref. no..." aria-label="Search requests">
+                   placeholder="Reference no. or resident name…" aria-label="Search requests">
         </div>
 
-        <div class="pill-group" role="group" aria-label="Filter by status">
-            <a href="{{ route('service-requests.index', $baseFilters) }}" @class(['active' => ! $activeStatus])>All</a>
-            @foreach ($statuses as $status)
-                <a href="{{ route('service-requests.index', [...$baseFilters, 'status' => $status->value]) }}"
-                   @class(['active' => $activeStatus === $status->value])>{{ $status->label() }}</a>
+        <select name="service_type" class="form-select" style="max-width: 220px;" aria-label="Filter by service type">
+            <option value="">All Service Types</option>
+            @foreach ($serviceTypes as $serviceType)
+                <option value="{{ $serviceType->id }}" @selected((string) ($filters['service_type'] ?? '') === (string) $serviceType->id)>{{ $serviceType->name }}</option>
             @endforeach
-        </div>
+        </select>
 
-        <select name="category" class="form-select" style="max-width: 220px;" aria-label="Filter by category" onchange="this.form.submit()">
-            <option value="">All Categories</option>
-            @foreach ($categories as $category)
-                <option value="{{ $category->value }}" @selected(($filters['category'] ?? '') === $category->value)>{{ $category->label() }}</option>
+        <select name="status" class="form-select" style="max-width: 190px;" aria-label="Filter by status">
+            <option value="">All Statuses</option>
+            @foreach ($statuses as $status)
+                <option value="{{ $status->value }}" @selected(($filters['status'] ?? '') === $status->value)>{{ $status->label() }}</option>
             @endforeach
         </select>
 
         <div class="date-range d-flex align-items-center gap-1">
-            <input type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}" class="form-control" aria-label="Date received from" title="Date received from">
+            <input type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}" class="form-control" aria-label="Received from" title="Received from">
             <span class="text-secondary small">to</span>
-            <input type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}" class="form-control" aria-label="Date received to" title="Date received to">
+            <input type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}" class="form-control" aria-label="Received to" title="Received to">
         </div>
 
         <button type="submit" class="btn btn-outline-secondary bg-white">Search</button>
@@ -64,12 +55,12 @@
             <table class="table table-app">
                 <thead>
                 <tr>
-                    <th class="d-none d-md-table-cell">Reference No.</th>
+                    <th class="d-none d-md-table-cell">Reference</th>
                     <th>Resident</th>
-                    <th class="d-none d-md-table-cell">Category</th>
-                    <th class="d-none d-xl-table-cell">Description</th>
+                    <th class="d-none d-lg-table-cell">Service Type</th>
                     <th>Status</th>
-                    <th class="d-none d-sm-table-cell">Date Received</th>
+                    <th class="d-none d-sm-table-cell text-end">Amount</th>
+                    <th class="d-none d-md-table-cell">Received</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -78,18 +69,20 @@
                     <tr data-href="{{ route('service-requests.show', $serviceRequest) }}">
                         <td class="ref-no d-none d-md-table-cell">{{ $serviceRequest->reference_no }}</td>
                         <td class="fw-medium">
-                            {{ $serviceRequest->resident->name }}
-                            <div class="cell-sub d-md-none">{{ $serviceRequest->reference_no }} · {{ $serviceRequest->category->shortLabel() }}<span class="d-sm-none text-nowrap"> · {{ $serviceRequest->date_received->format('M j') }}</span></div>
+                            {{ $serviceRequest->resident->full_name }}
+                            <div class="cell-sub d-lg-none">
+                                <span class="d-md-none">{{ $serviceRequest->reference_no }} · </span>{{ $serviceRequest->serviceType->name }}<span class="d-md-none"> · {{ $serviceRequest->received_at->format('M j') }}</span>
+                            </div>
                         </td>
-                        <td class="d-none d-md-table-cell">{{ $serviceRequest->category->shortLabel() }}</td>
-                        <td class="text-secondary d-none d-xl-table-cell">{{ Str::limit($serviceRequest->description, 40) }}</td>
+                        <td class="d-none d-lg-table-cell">{{ $serviceRequest->serviceType->name }}</td>
                         <td><x-status-badge :status="$serviceRequest->status" /></td>
-                        <td class="text-nowrap d-none d-sm-table-cell">{{ $serviceRequest->date_received->format('M j, Y') }}</td>
-                        <td class="text-end text-nowrap"><a href="{{ route('service-requests.show', $serviceRequest) }}" class="small">View<span class="d-none d-sm-inline"> Details</span></a></td>
+                        <td class="d-none d-sm-table-cell text-end"><x-peso :amount="$serviceRequest->fee_amount" /></td>
+                        <td class="d-none d-md-table-cell text-nowrap">{{ $serviceRequest->received_at->format('M j, Y') }}</td>
+                        <td class="text-end text-nowrap"><a href="{{ route('service-requests.show', $serviceRequest) }}" class="small">View<span class="d-none d-xl-inline"> Details</span></a></td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-secondary py-4">No matching records found.</td>
+                        <td colspan="7" class="text-center text-secondary py-4">No matching records found. Clear a filter or check the spelling.</td>
                     </tr>
                 @endforelse
                 </tbody>
@@ -97,80 +90,62 @@
         </div>
     </div>
 
+    <p class="status-legend">Statuses: Submitted → Under Review → Approved → Cash Payment → Completed. Services with a ₱0.00 fee skip Cash Payment.</p>
+
     <div class="mt-3">{{ $serviceRequests->links() }}</div>
 @endsection
 
 @push('modals')
+    {{-- Screen 11: Add New Service Request (Staff-Assisted) --}}
     <div class="modal fade" id="newRequestModal" tabindex="-1" aria-labelledby="newRequestModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down modal-dialog-scrollable">
             <div class="modal-content">
-                <form method="POST" action="{{ route('service-requests.store') }}" novalidate>
+                <form method="POST" action="{{ route('service-requests.store') }}" enctype="multipart/form-data" novalidate data-submission-form class="d-contents">
                     @csrf
                     <div class="modal-body p-4">
-                        <h2 class="h6 fw-bold mb-3" id="newRequestModalLabel">New Service Request</h2>
+                        <h2 class="h5 fw-bold mb-3" id="newRequestModalLabel">Add New Service Request <span class="fw-normal text-secondary">(Staff-Assisted)</span></h2>
 
-                        @php
-                            $isNewResident = old('new_resident') === '1';
-                            $selectedResident = $residents->firstWhere('id', (int) old('resident_id', request('resident')));
-                        @endphp
+                        @php($selectedResident = $residents->firstWhere('id', (int) old('resident_id', request('resident'))))
 
-                        {{-- Searchable resident field; "New resident" adds one without leaving this form. --}}
-                        <div class="mb-3" data-resident-picker>
-                            <input type="hidden" name="new_resident" value="{{ $isNewResident ? 1 : 0 }}" data-new-flag>
+                        <x-submission-fields :options="$serviceTypeOptions" bag="createRequest">
+                            <x-slot:before>
+                                {{-- Searchable resident field; residents who are not on file are added on the Residents page first. --}}
+                                <div class="mb-3" data-resident-picker data-add-resident-url="{{ route('residents.index', ['new' => 1]) }}">
+                                    <label for="resident-search" class="form-label">Resident</label>
+                                    <div class="position-relative">
+                                        <input type="hidden" name="resident_id" value="{{ $selectedResident?->id }}" data-resident-id>
+                                        <input type="text" id="resident-search" data-resident-search
+                                               value="{{ $selectedResident ? $selectedResident->full_name.' ('.$selectedResident->purok.')' : '' }}"
+                                               class="form-control @error('resident_id', 'createRequest') is-invalid @enderror"
+                                               placeholder="Type a name, purok, or contact no…" autocomplete="off"
+                                               role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="resident-options">
+                                        <ul id="resident-options" class="resident-options list-group d-none" role="listbox" data-resident-options></ul>
+                                        @error('resident_id', 'createRequest')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <script type="application/json" data-residents>@json($residentOptions)</script>
+                                </div>
+                            </x-slot:before>
 
-                            <div data-existing-section @class(['d-none' => $isNewResident])>
-                                <label for="resident-search" class="form-label small">Resident</label>
-                                <div class="position-relative">
-                                    <input type="hidden" name="resident_id" value="{{ $selectedResident?->id }}" data-resident-id>
-                                    <input type="text" id="resident-search" data-resident-search
-                                           value="{{ $selectedResident ? $selectedResident->name.' ('.$selectedResident->purok.')' : '' }}"
-                                           class="form-control @error('resident_id', 'createRequest') is-invalid @enderror"
-                                           placeholder="Type a name, purok, or contact no..." autocomplete="off"
-                                           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="resident-options">
-                                    <ul id="resident-options" class="resident-options list-group d-none" role="listbox" data-resident-options></ul>
-                                    @error('resident_id', 'createRequest')
+                            <x-slot:after>
+                                <div class="mb-3">
+                                    <label for="createRequest-received-at" class="form-label">Date Received</label>
+                                    <input type="date" id="createRequest-received-at" name="received_at" max="{{ today()->toDateString() }}"
+                                           value="{{ old('received_at', today()->toDateString()) }}"
+                                           class="form-control @error('received_at', 'createRequest') is-invalid @enderror" required>
+                                    @error('received_at', 'createRequest')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <button type="button" class="btn btn-link btn-sm px-0 mt-1" data-show-new>
-                                    <i class="bi bi-person-plus"></i> New resident (not in the list)
-                                </button>
-                            </div>
+                            </x-slot:after>
+                        </x-submission-fields>
 
-                            <div data-new-section @class(['d-none' => ! $isNewResident])>
-                                <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
-                                    <span class="small fw-semibold">New resident</span>
-                                    <button type="button" class="btn btn-link btn-sm px-0" data-show-existing>Choose an existing resident instead</button>
-                                </div>
-                                <div class="row g-2">
-                                    @foreach ([
-                                        ['name', 'Name', 'col-12', 'Enter name'],
-                                        ['address', 'Address', 'col-12', 'Enter address'],
-                                        ['contact_number', 'Contact (optional)', 'col-sm-6', 'Enter contact'],
-                                        ['purok', 'Purok', 'col-sm-6', 'Enter purok'],
-                                    ] as [$field, $label, $columnClass, $placeholder])
-                                        <div class="{{ $columnClass }}">
-                                            <label for="new-resident-{{ $field }}" class="form-label small mb-1">{{ $label }}</label>
-                                            <input type="text" id="new-resident-{{ $field }}" name="resident[{{ $field }}]"
-                                                   value="{{ old('resident.'.$field) }}" placeholder="{{ $placeholder }}"
-                                                   @if ($field === 'name') data-new-resident-name @endif
-                                                   class="form-control @error('resident.'.$field, 'createRequest') is-invalid @enderror">
-                                            @error('resident.'.$field, 'createRequest')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-
-                            <script type="application/json" data-residents>@json($residentOptions)</script>
-                        </div>
-
-                        @include('service-requests._form-fields', ['bag' => 'createRequest', 'serviceRequest' => null])
-
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-success">Save Request</button>
+                        <p class="small text-secondary mt-3">Use this form when a resident visits the office and cannot submit online. A reference number is generated on save.</p>
+                        <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+                            <span class="small text-secondary me-auto" data-submit-hint aria-live="polite"></span>
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success" data-submit>Save Request</button>
                         </div>
                     </div>
                 </form>

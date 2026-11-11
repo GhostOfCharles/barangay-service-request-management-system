@@ -2,11 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Enums\DocumentStatus;
-use App\Enums\RequestCategory;
 use App\Enums\RequestStatus;
 use App\Models\Resident;
 use App\Models\ServiceRequest;
+use App\Models\ServiceType;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -25,11 +24,11 @@ class ServiceRequestFactory extends Factory
         return [
             'reference_no' => 'SR-'.now()->year.'-'.fake()->unique()->numerify('9###'),
             'resident_id' => Resident::factory(),
-            'category' => fake()->randomElement(RequestCategory::cases()),
-            'description' => fake()->sentence(),
-            'document_status' => DocumentStatus::Complete,
-            'date_received' => today(),
-            'status' => RequestStatus::Pending,
+            'service_type_id' => ServiceType::factory(),
+            'purpose' => fake()->sentence(),
+            'status' => RequestStatus::Submitted,
+            'fee_amount' => '50.00',
+            'received_at' => today(),
             'created_by' => User::factory(),
         ];
     }
@@ -40,5 +39,10 @@ class ServiceRequestFactory extends Factory
             'status' => $status,
             'completed_at' => $status === RequestStatus::Completed ? now() : null,
         ]);
+    }
+
+    public function free(): static
+    {
+        return $this->state(fn (array $attributes) => ['fee_amount' => '0.00']);
     }
 }

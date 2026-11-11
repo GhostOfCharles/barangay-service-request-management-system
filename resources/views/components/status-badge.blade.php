@@ -1,3 +1,4 @@
-@props(['status'])
+{{-- A status pill for a request, ticket, verification, or account status. --}}
+@props(['status', 'kind' => 'request'])
 
-<span class="status-badge status-{{ $status->value }}">{{ $status->label() }}</span>
+<span {{ $attributes->class(['status-badge', "status-{$kind}-{$status->value}"]) }}>{{ $status->label() }}</span>

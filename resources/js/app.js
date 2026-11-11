@@ -1,5 +1,7 @@
 import * as bootstrap from 'bootstrap';
 import { initResidentPicker } from './resident-picker';
+import { initSubmissionForm } from './submission-form';
+import { initChecklistEditor } from './checklist-editor';
 
 window.bootstrap = bootstrap;
 
@@ -26,6 +28,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelectorAll('[data-resident-picker]').forEach(initResidentPicker);
+    document.querySelectorAll('[data-submission-form]').forEach(initSubmissionForm);
+    document.querySelectorAll('[data-checklist-editor]').forEach(initChecklistEditor);
+
+    // When a form dialog opens, put the cursor where typing should start:
+    // the first field with an error, otherwise the first empty field.
+    document.addEventListener('shown.bs.modal', (event) => {
+        const fields = [...event.target.querySelectorAll('input:not([type="hidden"]):not([type="file"]), select, textarea')]
+            .filter((field) => !field.disabled && !field.readOnly && field.offsetParent !== null);
+        const target = fields.find((field) => field.classList.contains('is-invalid'))
+            ?? fields.find((field) => field.value === '')
+            ?? fields[0];
+
+        target?.focus();
+    });
 
     // Re-open a modal after a failed form submission so validation errors stay visible.
     const modalToReopen = document.body.dataset.reopenModal;

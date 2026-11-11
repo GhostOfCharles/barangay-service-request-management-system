@@ -20,7 +20,7 @@
                 <div class="form-check mb-3">
                     <input type="hidden" name="is_active" value="0">
                     <input type="checkbox" id="is_active" name="is_active" value="1" class="form-check-input"
-                           @checked(old('is_active', $user->is_active))>
+                           @checked(old('is_active', $user->isActive()))>
                     <label for="is_active" class="form-check-label small">Account is active (can log in)</label>
                 </div>
 

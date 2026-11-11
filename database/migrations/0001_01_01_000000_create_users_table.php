@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('username')->unique();
             $table->string('role', 20)->default('staff');
+            $table->string('status', 20)->default('active')->index();
             $table->string('position')->nullable();
-            $table->boolean('is_active')->default(true);
             $table->boolean('must_change_password')->default(false);
             $table->string('password');
             $table->rememberToken();

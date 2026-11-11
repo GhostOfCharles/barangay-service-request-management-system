@@ -1,10 +1,11 @@
 @extends('layouts.guest')
 
-@section('title', 'Staff Login')
+@section('title', 'Log In')
+@section('footnote', 'Administrator, Staff, and Resident accounts use this same login page. Access depends on the account role.')
 
 @section('content')
     <div class="panel p-4 shadow-sm">
-        <h2 class="h6 fw-bold mb-3">Staff Login</h2>
+        <h2 class="h6 fw-bold mb-3">Log In</h2>
 
         @if (session('status'))
             <div class="alert alert-success small py-2">{{ session('status') }}</div>
@@ -36,7 +37,10 @@
             <button type="submit" class="btn btn-success w-100">Log In</button>
         </form>
 
-        <div class="text-center mt-3">
+        <p class="text-center mt-3 mb-1">
+            New resident? <a href="{{ route('register') }}" class="fw-semibold">Register an account</a>
+        </p>
+        <div class="text-center">
             <a href="{{ route('password.forgot') }}" class="small text-secondary">Forgot Password?</a>
         </div>
     </div>

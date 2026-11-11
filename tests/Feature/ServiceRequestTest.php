@@ -2,215 +2,171 @@
 
 namespace Tests\Feature;
 
-use App\Enums\RequestCategory;
+use App\Enums\LogEntryType;
 use App\Enums\RequestStatus;
-use App\Enums\RequestUpdateType;
 use App\Models\Resident;
 use App\Models\ServiceRequest;
+use App\Models\ServiceType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
+/**
+ * FR-02, FR-04, FR-05, FR-06, FR-10, FR-12: submission with the document checklist,
+ * the one status workflow, follow-up notes, and search.
+ */
 class ServiceRequestTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function clearance(): ServiceType
+    {
+        return ServiceType::factory()->withDocuments(['Valid ID (front)', 'Proof of Residency'])->create(['name' => 'Barangay Clearance', 'fee' => '50.00']);
+    }
+
     /**
-     * @return array<string, mixed>
+     * @return array<int, UploadedFile>
      */
-    private function validPayload(Resident $resident): array
+    private function filesFor(ServiceType $serviceType): array
     {
-        return [
-            'resident_id' => $resident->id,
-            'category' => RequestCategory::Complaint->value,
-            'description' => 'Noise complaint against neighbor.',
-            'document_status' => 'not_required',
-            'date_received' => today()->toDateString(),
-        ];
+        return $serviceType->documentRequirements->mapWithKeys(fn ($requirement) => [
+            $requirement->id => UploadedFile::fake()->create('doc.pdf', 200, 'application/pdf'),
+        ])->all();
     }
 
-    public function test_staff_can_create_a_request_with_a_unique_reference(): void
+    public function test_staff_assisted_request_gets_a_reference_documents_and_first_log_entry(): void
     {
-        $user = User::factory()->create();
+        Storage::fake('local');
+        $serviceType = $this->clearance();
         $resident = Resident::factory()->create();
+        $staff = User::factory()->create();
 
-        $this->actingAs($user)->post('/service-requests', $this->validPayload($resident))->assertRedirect();
-        $this->actingAs($user)->post('/service-requests', $this->validPayload($resident))->assertRedirect();
+        $this->actingAs($staff)->post('/service-requests', [
+            'resident_id' => $resident->id,
+            'service_type_id' => $serviceType->id,
+            'purpose' => 'Employment requirement',
+            'received_at' => today()->toDateString(),
+            'documents' => $this->filesFor($serviceType),
+        ])->assertRedirect();
 
-        $year = now()->year;
-        $this->assertDatabaseHas('service_requests', ['reference_no' => "SR-{$year}-0001", 'status' => 'pending', 'created_by' => $user->id]);
-        $this->assertDatabaseHas('service_requests', ['reference_no' => "SR-{$year}-0002"]);
-        $this->assertDatabaseHas('request_updates', ['type' => RequestUpdateType::Created->value]);
+        $serviceRequest = ServiceRequest::firstOrFail();
+        $this->assertSame('SR-'.now()->year.'-0001', $serviceRequest->reference_no);
+        $this->assertSame(RequestStatus::Submitted, $serviceRequest->status);
+        $this->assertSame('50.00', $serviceRequest->fee_amount);
+        $this->assertCount(2, $serviceRequest->documents);
+        Storage::disk('local')->assertExists($serviceRequest->documents->first()->file_path);
+        $this->assertSame(RequestStatus::Submitted, $serviceRequest->logs()->first()->new_status);
     }
 
-    public function test_request_requires_valid_fields(): void
+    public function test_request_cannot_be_submitted_without_every_required_document(): void
     {
-        $this->actingAs(User::factory()->create())
-            ->post('/service-requests', [
-                'resident_id' => 999,
-                'category' => 'unknown',
-                'description' => '',
-                'document_status' => '',
-                'date_received' => today()->addDay()->toDateString(),
-            ])
-            ->assertSessionHasErrorsIn('createRequest', ['resident_id', 'category', 'description', 'document_status', 'date_received']);
+        Storage::fake('local');
+        $serviceType = $this->clearance();
+        $validId = $serviceType->documentRequirements->first();
+        $proof = $serviceType->documentRequirements->last();
+
+        $this->actingAs(User::factory()->create())->post('/service-requests', [
+            'resident_id' => Resident::factory()->create()->id,
+            'service_type_id' => $serviceType->id,
+            'purpose' => 'Employment requirement',
+            'received_at' => today()->toDateString(),
+            'documents' => [$validId->id => UploadedFile::fake()->create('id.exe', 10)],
+        ])->assertSessionHasErrorsIn('createRequest', [
+            "documents.{$validId->id}",
+            "documents.{$proof->id}" => 'Please attach the Proof of Residency.',
+        ]);
 
         $this->assertDatabaseCount('service_requests', 0);
     }
 
-    public function test_status_change_with_note_is_one_history_entry(): void
+    public function test_status_moves_one_step_at_a_time_and_is_logged(): void
     {
-        $user = User::factory()->create();
         $serviceRequest = ServiceRequest::factory()->create();
+        $staff = User::factory()->create();
 
-        $this->actingAs($user)
-            ->post("/service-requests/{$serviceRequest->id}/follow-ups", [
-                'action_date' => today()->toDateString(),
-                'status' => 'completed',
-                'note' => 'Released to the resident.',
-            ])
-            ->assertRedirect();
+        $this->actingAs($staff)->patch("/service-requests/{$serviceRequest->id}/status", ['status' => 'approved'])
+            ->assertSessionHasErrorsIn('updateStatus', 'status');
 
-        $serviceRequest->refresh();
-        $this->assertSame(RequestStatus::Completed, $serviceRequest->status);
-        $this->assertNotNull($serviceRequest->completed_at);
-        $this->assertSame(1, $serviceRequest->updates()->count());
-        $this->assertDatabaseHas('request_updates', [
+        $this->actingAs($staff)->patch("/service-requests/{$serviceRequest->id}/status", ['status' => 'under_review'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(RequestStatus::UnderReview, $serviceRequest->fresh()->status);
+        $this->assertDatabaseHas('request_logs', [
             'service_request_id' => $serviceRequest->id,
-            'type' => 'status_change',
-            'from_status' => 'pending',
-            'to_status' => 'completed',
-            'note' => 'Released to the resident.',
-            'user_id' => $user->id,
+            'user_id' => $staff->id,
+            'old_status' => 'submitted',
+            'new_status' => 'under_review',
         ]);
     }
 
-    public function test_status_can_change_without_a_note(): void
+    public function test_staff_go_up_to_cash_payment_and_only_the_administrator_completes(): void
+    {
+        $serviceRequest = ServiceRequest::factory()->status(RequestStatus::CashPayment)->create();
+        $staff = User::factory()->create();
+        $administrator = User::factory()->administrator()->create();
+
+        $this->actingAs($staff)->patch("/service-requests/{$serviceRequest->id}/status", ['status' => 'completed'])
+            ->assertSessionHasErrorsIn('updateStatus', ['status' => 'Only the Administrator can set Completed.']);
+        $this->actingAs($staff)->post("/service-requests/{$serviceRequest->id}/complete")->assertForbidden();
+
+        $this->actingAs($administrator)->post("/service-requests/{$serviceRequest->id}/complete")->assertRedirect();
+
+        $serviceRequest->refresh();
+        $this->assertSame(RequestStatus::Completed, $serviceRequest->status);
+        $this->assertSame($administrator->id, $serviceRequest->completed_by);
+        $this->assertSame('0.00', $serviceRequest->amountDue());
+    }
+
+    public function test_free_services_skip_cash_payment(): void
+    {
+        $serviceRequest = ServiceRequest::factory()->free()->status(RequestStatus::Approved)->create();
+
+        $this->assertSame(RequestStatus::Completed, $serviceRequest->nextStatus());
+        $this->assertNotContains(RequestStatus::CashPayment, array_column($serviceRequest->load('logs')->trackerSteps(), 'status'));
+
+        $this->actingAs(User::factory()->create())->patch("/service-requests/{$serviceRequest->id}/status", ['status' => 'cash_payment'])
+            ->assertSessionHasErrorsIn('updateStatus', 'status');
+    }
+
+    public function test_follow_up_note_is_added_to_the_request_log(): void
     {
         $serviceRequest = ServiceRequest::factory()->create();
 
-        $this->actingAs(User::factory()->create())
-            ->post("/service-requests/{$serviceRequest->id}/follow-ups", ['action_date' => today()->toDateString(), 'status' => 'in_progress'])
-            ->assertSessionHasNoErrors();
+        $this->actingAs(User::factory()->create())->post("/service-requests/{$serviceRequest->id}/notes", ['note' => ''])
+            ->assertSessionHasErrorsIn('addNote', 'note');
 
-        $this->assertSame(RequestStatus::InProgress, $serviceRequest->fresh()->status);
+        $this->actingAs(User::factory()->create())->post("/service-requests/{$serviceRequest->id}/notes", ['note' => 'For captain\'s signature.']);
+
+        $this->assertDatabaseHas('request_logs', ['entry_type' => LogEntryType::Note->value, 'note' => 'For captain\'s signature.']);
     }
 
-    public function test_follow_up_without_status_change_keeps_the_status(): void
+    public function test_requests_can_be_searched_and_filtered(): void
     {
-        $serviceRequest = ServiceRequest::factory()->create();
-
-        $this->actingAs(User::factory()->create())
-            ->post("/service-requests/{$serviceRequest->id}/follow-ups", [
-                'action_date' => today()->toDateString(),
-                'note' => 'Called the resident to submit a valid ID.',
-            ])
-            ->assertRedirect();
-
-        $this->assertSame(RequestStatus::Pending, $serviceRequest->fresh()->status);
-        $this->assertDatabaseHas('request_updates', ['type' => 'follow_up', 'note' => 'Called the resident to submit a valid ID.']);
-    }
-
-    public function test_update_needs_a_note_or_a_new_status(): void
-    {
-        $serviceRequest = ServiceRequest::factory()->create();
-
-        $this->actingAs(User::factory()->create())
-            ->post("/service-requests/{$serviceRequest->id}/follow-ups", ['action_date' => today()->toDateString(), 'note' => ''])
-            ->assertSessionHasErrorsIn('addUpdate', 'note');
-
-        $this->assertSame(0, $serviceRequest->updates()->count());
-    }
-
-    public function test_update_rejects_the_current_status(): void
-    {
-        $serviceRequest = ServiceRequest::factory()->create();
-
-        $this->actingAs(User::factory()->create())
-            ->post("/service-requests/{$serviceRequest->id}/follow-ups", ['action_date' => today()->toDateString(), 'status' => 'pending'])
-            ->assertSessionHasErrorsIn('addUpdate', 'status');
-    }
-
-    public function test_new_resident_can_be_added_while_creating_a_request(): void
-    {
-        $this->actingAs(User::factory()->create())
-            ->post('/service-requests', [
-                ...$this->validPayload(Resident::factory()->create()),
-                'resident_id' => '',
-                'new_resident' => '1',
-                'resident' => ['name' => 'Ana Lim', 'address' => '3 Ilang-Ilang St.', 'contact_number' => '', 'purok' => 'Purok 6'],
-            ])
-            ->assertRedirect();
-
-        $resident = Resident::where('name', 'Ana Lim')->firstOrFail();
-        $this->assertSame('Purok 6', $resident->purok);
-        $this->assertDatabaseHas('service_requests', ['resident_id' => $resident->id]);
-    }
-
-    public function test_new_resident_fields_are_validated_with_the_request(): void
-    {
-        $this->actingAs(User::factory()->create())
-            ->post('/service-requests', [
-                'new_resident' => '1',
-                'resident' => ['name' => '', 'address' => '', 'purok' => ''],
-                'category' => '',
-            ])
-            ->assertSessionHasErrorsIn('createRequest', ['resident.name', 'resident.address', 'resident.purok', 'category'])
-            ->assertSessionDoesntHaveErrors('resident_id', null, 'createRequest');
-
-        $this->assertDatabaseCount('residents', 0);
-        $this->assertDatabaseCount('service_requests', 0);
-    }
-
-    public function test_requests_can_be_filtered_by_status_category_and_search(): void
-    {
-        $maria = Resident::factory()->create(['name' => 'Maria Santos']);
-        $juan = Resident::factory()->create(['name' => 'Juan dela Cruz']);
-        ServiceRequest::factory()->for($maria)->status(RequestStatus::Completed)->create(['category' => RequestCategory::CertificateClearance]);
-        ServiceRequest::factory()->for($juan)->create(['category' => RequestCategory::AssistanceReferral]);
+        $clearance = ServiceType::factory()->create(['name' => 'Barangay Clearance']);
+        $maria = Resident::factory()->create(['full_name' => 'Maria Santos']);
+        ServiceRequest::factory()->for($maria)->for($clearance)->status(RequestStatus::Completed)->create(['reference_no' => 'SR-2026-0001']);
+        ServiceRequest::factory()->create();
 
         $user = User::factory()->create();
 
-        $this->assertListedResidents($user, '/service-requests?status=completed', ['Maria Santos']);
-        $this->assertListedResidents($user, '/service-requests?category=assistance_referral', ['Juan dela Cruz']);
-        $this->assertListedResidents($user, '/service-requests?search=Maria', ['Maria Santos']);
+        foreach (['search=Santos', 'search=SR-2026-0001', "service_type={$clearance->id}", 'status=completed'] as $query) {
+            $this->actingAs($user)->get("/service-requests?{$query}")
+                ->assertViewHas('serviceRequests', fn ($requests) => $requests->pluck('reference_no')->all() === ['SR-2026-0001']);
+        }
     }
 
-    public function test_new_request_form_is_not_prefilled_from_the_list(): void
+    public function test_request_details_show_documents_tracker_and_log(): void
     {
-        ServiceRequest::factory()->create(['description' => 'Existing request text']);
+        $serviceRequest = ServiceRequest::factory()->status(RequestStatus::CashPayment)->create();
+        $serviceRequest->documents()->create(['document_name' => 'Valid ID (front)', 'file_path' => 'x.pdf', 'original_name' => 'id_front.pdf', 'file_size' => 1200]);
 
-        $this->actingAs(User::factory()->create())->get('/service-requests')
-            ->assertSeeInOrder(['Existing request text', 'New Service Request'])
-            ->assertDontSee('required>Existing request text</textarea>', false);
-    }
-
-    /**
-     * @param  list<string>  $expectedNames
-     */
-    private function assertListedResidents(User $user, string $url, array $expectedNames): void
-    {
-        $this->actingAs($user)->get($url)->assertViewHas(
-            'serviceRequests',
-            fn ($serviceRequests) => $serviceRequests->pluck('resident.name')->all() === $expectedNames,
-        );
-    }
-
-    public function test_details_page_shows_request_history(): void
-    {
-        $user = User::factory()->create();
-        $serviceRequest = ServiceRequest::record([
-            'resident_id' => Resident::factory()->create()->id,
-            'category' => 'complaint',
-            'description' => 'Illegal dumping of garbage.',
-            'document_status' => 'not_required',
-            'date_received' => today()->toDateString(),
-        ], $user);
-
-        $this->actingAs($user)->get("/service-requests/{$serviceRequest->id}")
+        $this->actingAs(User::factory()->create())->get("/service-requests/{$serviceRequest->id}")
             ->assertOk()
             ->assertSee($serviceRequest->reference_no)
-            ->assertSee('Illegal dumping of garbage.')
-            ->assertSee('Request recorded as');
+            ->assertSee('Valid ID (front)')
+            ->assertSee('Mark Completed')
+            ->assertSee('Administrator only');
     }
 }

@@ -2,30 +2,32 @@
 
 ## Source of truth
 
-- Treat `documents/COMMUNITY SERVICE REQUEST MANAGEMENT SYSTEM.docx` as the requirements and wireframe reference. It contains interface wireframes; follow them to guide frontend layout and documented workflows. The README summarizes its MVP, which is now implemented. The README's **Implementation decisions** table records how details the document left open were settled.
-- The system is an internal web app for Barangay San Rafael. It is a student project, not an officially adopted government system.
-- Preserve the documented boundary: authenticated Administrator and Staff roles; residents are requesters without accounts; one service-request workflow covers certificates/clearances, complaints, and assistance/referrals.
+- Treat `documents/COMMUNITY_SERVICE_REQUEST_MANAGEMENT_SYSTEM_REVISED - Copy.docx` (the revised planning document) as the requirements and wireframe reference. Its 14 functional requirements (FR-01 to FR-14), 15 wireframe screens, 13 flowcharts, navigation maps, and nine-table database design (section 10.1) define the scope. The README's **Implementation decisions** table records how details the document left open were settled.
+- The system is a web app for Barangay San Rafael. It is a student project, not an officially adopted government system.
+- Preserve the documented boundary: three roles (Administrator, Staff, User/Resident); residents register themselves and stay inactive until Staff or the Administrator verify their valid ID; one service-request workflow covers certificates/clearances, complaints, and assistance/referrals as service types.
 
 ## Required workflow direction
 
-- Keep the core records connected: reusable resident, service request, current status, and request follow-up history.
-- Support request intake, status updates, follow-up logging, search/filtering, dashboard monitoring, and basic reports.
-- Use the document’s login, dashboard, residents, service request, report, logout wireframes and navigation plan to guide frontend layout and functionality. Match documented fields and visible actions; do not infer additional business rules from mockups.
-- Restrict user-management controls to Administrators. Protect resident information with authentication and role-based access.
-- Keep paper records/signatures where required. Do not add out-of-scope features such as resident accounts/public portal, digital signatures, online payments, SMS/email notifications, advanced analytics, accounting/payroll, or unrelated municipal systems without updated requirements.
+- One status workflow for every request: Submitted > Under Review > Approved > Cash Payment > Completed, one step at a time. Staff may set statuses up to Cash Payment; only the Administrator sets Completed. Services with a ₱0.00 fee skip Cash Payment. Every change is written to `request_logs`. These rules live in `App\Enums\RequestStatus` and `ServiceRequest::canMoveTo()`; reuse them instead of re-implementing them.
+- A request cannot be submitted until every required document on its service type's checklist is attached (JPG, PNG, or PDF, up to 5 MB each). Validation is shared in `App\Http\Controllers\Concerns\ValidatesRequestSubmission`.
+- Fulfillment is offline: residents pay cash at the barangay hall on receipt, and the Administrator marks the request Completed. No online payments, SMS, email notifications, or live chat; residents see status in their dashboard, and concerns go through asynchronous tickets (Open, Answered, Closed).
+- Residents see and manage only their own requests and tickets. Uploaded IDs and documents stay on the private `local` disk and are served only through `PrivateFileController` with the gates in `AppServiceProvider`.
+- Use the document's wireframes and navigation maps for layout and visible actions. Match documented fields and labels; do not infer additional business rules from mockups.
+- Keep paper records and official signatures where required. Do not add out-of-scope features (digital signatures, online payments, SMS/email notifications, live chat, advanced analytics, accounting/payroll, unrelated municipal systems) without updated requirements.
 
 ## Technical direction
 
-- Use the existing Laravel MVC structure: routes, controllers, Eloquent models, migrations, and Blade views. Keep the implementation simple and appropriate to the project’s beginner-level Laravel context.
+- Use the existing Laravel MVC structure: routes, controllers, Eloquent models, migrations, and Blade views. Keep the implementation simple and appropriate to the project's beginner-level Laravel context.
 - The stack is PHP 8.3+, Laravel 13, Blade, HTML/CSS/Bootstrap 5 (bundled with Vite), and MySQL. Tailwind CSS was removed to match the planning document; do not reintroduce it.
-- Status, category, document-check, and role values live in `app/Enums`; reuse them instead of hard-coding strings.
-- Pages must stay usable on phones (about 375px wide) as well as office monitors. Staff use the system as a responsive website in their phone's browser. Follow the existing patterns: the `offcanvas-lg` sidebar, Bootstrap `d-none d-md-table-cell` to hide secondary table columns with a `.cell-sub` line under the main cell, `.page-actions` for header buttons, `.filter-bar` for filters, `modal-fullscreen-sm-down` for form modals, and `data-href` on table rows so the whole row opens the record. Keep text at least 13px and use `var(--brgy-muted)` for secondary text instead of lighter greys. A native app, PWA, or offline mode is not part of the scope.
+- Status, role, account, verification, ticket, and category values live in `app/Enums`; reuse them instead of hard-coding strings. The purok list and upload limits are in `config/barangay.php`.
+- Route groups use `role:resident` (resident portal under `/my`) and `role:personnel` (Staff and Administrator); Administrator-only actions use the `administer` gate.
+- Pages must stay usable on phones (about 375px wide) as well as office monitors. Follow the existing patterns: the `offcanvas-lg` sidebar, Bootstrap `d-none d-md-table-cell` to hide secondary table columns with a `.cell-sub` line under the main cell, `.page-actions` for header buttons, `.filter-bar` for filters, `modal-fullscreen-sm-down` for form modals, `data-href` on table rows, and the `<x-status-badge>`, `<x-status-tracker>`, `<x-peso>`, and `<x-submission-fields>` components.
 - `.env.example` selects MySQL. Local setup requires a running MySQL server and a database created by the developer; `composer run setup` runs migrations but does not create the database.
 - Keep credentials and local `.env` values out of tracked changes.
 
 ## Unclear requirements
 
-Statuses, document-check values, reference-number format, validation rules, the password-reset flow, and the no-delete rule are decided in the README's **Implementation decisions** table. Follow it, and update it together with the code if the team changes a decision. Do not invent an audit/retention policy, deployment model, or production availability guarantees. Flag these for the project team when implementation depends on them. The planning document explicitly excludes guaranteed operation during internet outages.
+The puroks, the starting service-type checklists, the password-reset flow, and the no-delete rule are decided in the README's **Implementation decisions** table. Follow it, and update it together with the code if the team changes a decision. Do not invent an audit/retention policy, deployment model, or production availability guarantees. The planning document explicitly excludes guaranteed operation during internet outages.
 
 ===
 
