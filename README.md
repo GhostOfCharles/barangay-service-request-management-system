@@ -12,7 +12,7 @@ There are three roles:
 | --- | --- |
 | **Resident** | Registers an account with a valid ID, waits for verification, then submits requests with the required documents, tracks status and the amount due, and opens support tickets. Sees only his or her own records. |
 | **Staff** | Verifies residents, adds walk-in residents, creates staff-assisted requests, moves requests through the workflow up to Cash Payment, adds follow-up notes, answers tickets, and views reports. |
-| **Administrator** | Everything Staff can do, plus Mark Completed, service types/fees/checklists, and user accounts. |
+| **Administrator** | Everything Staff can do, plus Mark Completed, service types/fees/checklists, user accounts, and the Activity Log. |
 
 ## MVP scope (implemented)
 
@@ -57,6 +57,8 @@ The planning document leaves some details open. The implementation settles them 
 | Deleting records | Residents, requests, logs and tickets cannot be deleted in the application. Staff accounts are deactivated, not deleted. | NFR Reliability ("preserve successfully stored request records and their logs"). |
 | Phone use | The system is a responsive website, not a separate mobile app. | NFR Responsiveness ("smaller screens residents are likely to use"). |
 | Time zone | Dates and times are recorded and shown in Philippine time (`Asia/Manila`). Set `APP_TIMEZONE` in `.env` to change it. | Barangay San Rafael is in the Philippines; request logs show times (Screen 10). |
+| Activity Log | Every change made by Staff or the Administrator (status changes and completions, notes, staff-assisted requests, resident records, verification decisions, ticket replies and closes, service types, user accounts, password resets and changes) is recorded with the user, action, record, date and time, IP address, and before → after values. Only the Administrator can view it (`/admin/activity-log`), with filters, search, print, and CSV export. Entries cannot be edited or deleted. Residents' own actions are not logged, and passwords are never recorded. | Added after the adviser's review, to monitor Staff and Administrator accounts; supports NFR Security and Reliability. |
+| Live updates | Open pages refresh their changing parts every 3 seconds (simple polling, no WebSockets), keeping typed input and open dialogs. | Lets Staff and residents see each other's changes without refreshing. |
 
 ## Screens
 
@@ -80,7 +82,7 @@ The 15 screens follow the revised document's wireframes:
 | 14 | Reports | Staff, Administrator | `/reports` |
 | 15 | Logout | All roles | modal from the sidebar |
 
-User Management (`/admin/users`, Administrator) and Change Password (`/password`) are supporting screens.
+User Management (`/admin/users`, Administrator), Activity Log (`/admin/activity-log`, Administrator), and Change Password (`/password`) are supporting screens.
 
 ## Tech stack
 

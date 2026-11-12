@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ActivityAction;
 use App\Enums\RequestStatus;
 use App\Enums\VerificationStatus;
 use App\Http\Controllers\Concerns\ValidatesRequestSubmission;
+use App\Models\ActivityLog;
 use App\Models\Resident;
 use App\Models\ServiceRequest;
 use App\Models\ServiceType;
@@ -60,6 +62,13 @@ class ServiceRequestController extends Controller
         ]);
 
         $serviceRequest = ServiceRequest::submit($validated, $request->user(), $files);
+        $serviceRequest->load(['resident', 'serviceType']);
+
+        ActivityLog::record($request->user(), ActivityAction::RequestCreated,
+            "Recorded a staff-assisted {$serviceRequest->serviceType->name} request for {$serviceRequest->resident->full_name}.",
+            $serviceRequest,
+            ['Status' => [null, $serviceRequest->status->label()], 'Fee' => [null, '₱'.number_format((float) $serviceRequest->fee_amount, 2)]],
+        );
 
         return redirect()->route('service-requests.show', $serviceRequest)
             ->with('success', "Service request {$serviceRequest->reference_no} has been saved.");

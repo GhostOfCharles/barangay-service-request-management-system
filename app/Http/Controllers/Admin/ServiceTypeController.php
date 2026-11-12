@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ActivityAction;
 use App\Enums\RequestCategory;
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\ServiceType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,6 +44,10 @@ class ServiceTypeController extends Controller
             return $serviceType;
         });
 
+        ActivityLog::record($request->user(), ActivityAction::ServiceTypeCreated,
+            "Added the service type {$serviceType->name}.", $serviceType,
+            ActivityLog::differences([], self::snapshot($serviceType)));
+
         return redirect()->route('admin.service-types.index', ['edit' => $serviceType->id])
             ->with('success', "{$serviceType->name} has been added.");
     }
@@ -49,11 +55,19 @@ class ServiceTypeController extends Controller
     public function update(Request $request, ServiceType $serviceType): RedirectResponse
     {
         $validated = $this->validateServiceType($request, $serviceType);
+        $before = self::snapshot($serviceType);
 
         DB::transaction(function () use ($serviceType, $validated) {
             $serviceType->update(Arr::except($validated, 'documents'));
             $this->syncChecklist($serviceType, $validated['documents'] ?? []);
         });
+
+        $changes = ActivityLog::differences($before, self::snapshot($serviceType));
+
+        if ($changes) {
+            ActivityLog::record($request->user(), ActivityAction::ServiceTypeUpdated,
+                "Edited the service type {$serviceType->name}.", $serviceType, $changes);
+        }
 
         return redirect()->route('admin.service-types.index', ['edit' => $serviceType->id])
             ->with('success', "{$serviceType->name} has been saved. The new fee and checklist appear on the submission form.");
@@ -62,14 +76,38 @@ class ServiceTypeController extends Controller
     /**
      * Deactivate hides the service from new requests; existing requests keep it. Activate brings it back.
      */
-    public function toggle(ServiceType $serviceType): RedirectResponse
+    public function toggle(Request $request, ServiceType $serviceType): RedirectResponse
     {
         $serviceType->update(['is_active' => ! $serviceType->is_active]);
+
+        ActivityLog::record($request->user(),
+            $serviceType->is_active ? ActivityAction::ServiceTypeActivated : ActivityAction::ServiceTypeDeactivated,
+            ($serviceType->is_active ? 'Activated' : 'Deactivated')." the service type {$serviceType->name}.", $serviceType,
+            ['Availability' => $serviceType->is_active ? ['Inactive', 'Active'] : ['Active', 'Inactive']]);
 
         return redirect()->route('admin.service-types.index', ['edit' => $serviceType->id])
             ->with('success', $serviceType->is_active
                 ? "{$serviceType->name} is active again."
                 : "{$serviceType->name} is deactivated. Residents can no longer choose it.");
+    }
+
+    /**
+     * The fields shown in the Activity Log, by label. The checklist reads like "Valid ID (required), Cedula (optional)".
+     *
+     * @return array<string, ?string>
+     */
+    private static function snapshot(ServiceType $serviceType): array
+    {
+        $checklist = $serviceType->documentRequirements()->orderBy('id')->get()
+            ->map(fn ($requirement) => $requirement->document_name.($requirement->is_required ? ' (required)' : ' (optional)'))
+            ->implode(', ');
+
+        return [
+            'Name' => $serviceType->name,
+            'Category' => $serviceType->category->label(),
+            'Fee' => '₱'.number_format((float) $serviceType->fee, 2),
+            'Checklist' => $checklist ?: 'None',
+        ];
     }
 
     /**

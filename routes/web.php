@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\ServiceTypeController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
@@ -96,6 +97,10 @@ Route::middleware('auth')->group(function () {
                 Route::resource('users', UserController::class)->only(['index', 'create', 'store', 'edit', 'update']);
                 Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])
                     ->name('users.reset-password');
+
+                // Activity Log: read-only record of every Staff and Administrator change.
+                Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
+                Route::get('/activity-log/export', [ActivityLogController::class, 'export'])->name('activity-log.export');
             });
         });
     });

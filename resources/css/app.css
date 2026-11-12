@@ -1407,3 +1407,63 @@ tr[data-href]:hover > td {
         padding-block: 0.6rem;
     }
 }
+
+/* ---------- Activity Log (Administrator) ---------- */
+.action-tag {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: #eef3ee;
+    color: #2f4a34;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.activity-details {
+    min-width: 16rem;
+}
+
+.change-list {
+    list-style: none;
+    margin: 0.35rem 0 0;
+    padding: 0.4rem 0.6rem;
+    border-left: 3px solid #cfe8d0;
+    background: #f8faf8;
+    font-size: 0.8125rem;
+}
+
+.change-field {
+    color: var(--brgy-muted);
+}
+
+.change-list del {
+    color: #8a3b33;
+}
+
+.change-list ins {
+    color: var(--brgy-green-dark);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+@media (max-width: 575.98px) {
+    .activity-details {
+        min-width: 0;
+    }
+
+    .activity-table td:first-child,
+    .activity-table th:first-child {
+        white-space: normal;
+    }
+}
+
+@media print {
+    .activity-table a {
+        color: inherit;
+    }
+
+    .pagination {
+        display: none;
+    }
+}
