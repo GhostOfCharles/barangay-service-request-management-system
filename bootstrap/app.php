@@ -3,6 +3,8 @@
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\RespondWithLiveRegions;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('home'));
 
+        // Outside the account and route checks, so a poll that hits a redirect or 403 gets a JSON "stop".
+        $middleware->appendToGroup('web', RespondWithLiveRegions::class);
+        $middleware->prependToPriorityList(AuthenticatesRequests::class, RespondWithLiveRegions::class);
         $middleware->appendToGroup('web', EnsureAccountIsActive::class);
 
         $middleware->alias([

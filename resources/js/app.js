@@ -2,6 +2,7 @@ import * as bootstrap from 'bootstrap';
 import { initResidentPicker } from './resident-picker';
 import { initSubmissionForm } from './submission-form';
 import { initChecklistEditor } from './checklist-editor';
+import { initLivePoll } from './live-poll';
 
 window.bootstrap = bootstrap;
 
@@ -61,4 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!modalToReopen && phoneSheet && window.matchMedia('(max-width: 575.98px)').matches) {
         bootstrap.Modal.getOrCreateInstance(phoneSheet).show();
     }
+
+    initLivePoll();
 });

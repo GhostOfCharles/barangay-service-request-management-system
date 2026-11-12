@@ -13,7 +13,9 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-3 stat-grid">
+    {{-- data-live regions refresh every few seconds (resources/js/live-poll.js). --}}
+    @fragment('resident-stats')
+    <div class="row g-3 mb-3 stat-grid" data-live="resident-stats">
         <div class="col-6 col-xl-3">
             <div class="stat-card stat-pending">
                 <div class="stat-label">Active Requests</div>
@@ -41,8 +43,10 @@
             </a>
         </div>
     </div>
+    @endfragment
 
-    <div class="panel mb-3">
+    @fragment('resident-requests')
+    <div class="panel mb-3" data-live="resident-requests">
         <div class="panel-header">My Service Requests</div>
 
         <div class="request-cards d-sm-none">
@@ -102,17 +106,25 @@
             </table>
         </div>
     </div>
+    @endfragment
 
-    @if ($tracked)
-        <div class="panel p-3 d-none d-sm-block" id="tracker">
-            <h2 class="h6 fw-bold mb-3">Status Tracker — {{ $tracked->reference_no }} ({{ $tracked->serviceType->name }})</h2>
-            @include('resident._tracker', ['serviceRequest' => $tracked])
-        </div>
-    @endif
+    @fragment('resident-tracker')
+    <div data-live="resident-tracker">
+        @if ($tracked)
+            <div class="panel p-3 d-none d-sm-block" id="tracker">
+                <h2 class="h6 fw-bold mb-3">Status Tracker — {{ $tracked->reference_no }} ({{ $tracked->serviceType->name }})</h2>
+                @include('resident._tracker', ['serviceRequest' => $tracked])
+            </div>
+        @endif
+    </div>
+    @endfragment
 @endsection
 
 @push('modals')
-    {{-- Phones: each request's tracker opens as a bottom sheet. After submitting, the new request's sheet opens. --}}
+    {{-- Phones: each request's tracker opens as a bottom sheet. After submitting, the new request's sheet opens.
+         While a sheet is open, only the tracker inside it refreshes. --}}
+    @fragment('resident-sheets')
+    <div data-live="resident-sheets">
     @foreach ($serviceRequests as $serviceRequest)
         <div class="modal fade modal-sheet" id="track-{{ $serviceRequest->id }}" tabindex="-1" aria-labelledby="track-{{ $serviceRequest->id }}-label" aria-hidden="true"
              @if (request()->filled('track') && $tracked?->is($serviceRequest)) data-show-on-phone @endif>
@@ -126,10 +138,16 @@
                             </div>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        @include('resident._tracker', ['serviceRequest' => $serviceRequest])
+                        @fragment('track-body-'.$serviceRequest->id)
+                        <div data-live="track-body-{{ $serviceRequest->id }}">
+                            @include('resident._tracker', ['serviceRequest' => $serviceRequest])
+                        </div>
+                        @endfragment
                     </div>
                 </div>
             </div>
         </div>
     @endforeach
+    </div>
+    @endfragment
 @endpush

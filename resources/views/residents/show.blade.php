@@ -7,7 +7,9 @@
         <a href="{{ route('residents.index') }}" class="small text-secondary"><i class="bi bi-arrow-left"></i> Back to Residents</a>
     </div>
 
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    {{-- data-live regions refresh every few seconds (resources/js/live-poll.js); the edit form is left alone. --}}
+    @fragment('resident-heading')
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3" data-live="resident-heading">
         <div>
             <h1 class="page-title">{{ $resident->full_name }}</h1>
             <p class="page-subtitle mb-0">
@@ -23,6 +25,7 @@
             </div>
         @endif
     </div>
+    @endfragment
 
     <div class="row g-3">
         <div class="col-lg-5 col-xl-4">
@@ -36,7 +39,8 @@
                 </form>
             </div>
 
-            <div class="panel p-3">
+            @fragment('resident-account')
+            <div class="panel p-3" data-live="resident-account">
                 <h2 class="h6 fw-bold mb-2">Account and Verification</h2>
                 <dl class="row small mb-0">
                     <dt class="col-5 text-secondary fw-normal">Portal account</dt>
@@ -69,10 +73,12 @@
                     <a href="{{ route('residents.index', ['verification' => 'pending', 'review' => $resident->id]) }}#verify" class="btn btn-outline-success btn-sm mt-3">Review ID</a>
                 @endif
             </div>
+            @endfragment
         </div>
 
         <div class="col-lg-7 col-xl-8">
-            <div class="panel">
+            @fragment('resident-requests')
+            <div class="panel" data-live="resident-requests">
                 <div class="panel-header">Service Requests</div>
                 <div class="table-responsive">
                     <table class="table table-app">
@@ -108,6 +114,7 @@
                     </table>
                 </div>
             </div>
+            @endfragment
         </div>
     </div>
 @endsection

@@ -1367,9 +1367,9 @@ tr[data-href]:hover > td {
     }
 }
 
-/* On phones the ticket list shows alone, so the newest ticket shown by default on desktop is not highlighted. */
+/* On phones the list only shows when no ticket is open, so nothing in it is highlighted. */
 @media (max-width: 991.98px) {
-    .ticket-card.is-default {
+    .ticket-card.is-selected {
         border: 1px solid var(--brgy-border);
         background: #fff;
     }
