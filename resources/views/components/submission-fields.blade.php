@@ -14,8 +14,8 @@
 <script type="application/json" data-service-types>@json($options)</script>
 <script type="application/json" data-document-errors>@json($documentErrors)</script>
 
-<div class="row g-4">
-    <div class="{{ $columns ? 'col-lg-7' : 'col-12' }}">
+<div @class(['submission-layout', 'is-columns' => $columns])>
+    <div class="submission-fields">
         {{ $before ?? '' }}
 
         <div class="mb-3">
@@ -52,11 +52,13 @@
                 <div class="invalid-feedback">{{ $errorBag->first('purpose') }}</div>
             @endif
         </div>
-
-        {{ $after ?? '' }}
     </div>
 
-    <div class="{{ $columns ? 'col-lg-5' : 'col-12' }}">
+    @isset($after)
+        <div class="submission-actions">{{ $after }}</div>
+    @endisset
+
+    <div class="submission-docs">
         <div class="panel p-3">
             <h2 class="h6 fw-bold mb-3" data-checklist-title>Required Documents</h2>
             @if ($documentErrors->isNotEmpty())

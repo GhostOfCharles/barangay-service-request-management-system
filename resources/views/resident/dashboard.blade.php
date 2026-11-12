@@ -13,7 +13,7 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-3">
+    <div class="row g-3 mb-3 stat-grid">
         <div class="col-6 col-xl-3">
             <div class="stat-card stat-pending">
                 <div class="stat-label">Active Requests</div>
@@ -44,7 +44,30 @@
 
     <div class="panel mb-3">
         <div class="panel-header">My Service Requests</div>
-        <div class="table-responsive">
+
+        <div class="request-cards d-sm-none">
+            @forelse ($serviceRequests as $serviceRequest)
+                <button type="button" class="request-card" data-bs-toggle="modal" data-bs-target="#track-{{ $serviceRequest->id }}">
+                    <span class="request-card-main">
+                        <span class="request-card-title d-block">{{ $serviceRequest->serviceType->name }}</span>
+                        <span class="request-card-meta">
+                            <x-status-badge :status="$serviceRequest->status" />
+                            <span class="ref-no">{{ $serviceRequest->reference_no }}</span>
+                            @if ((float) $serviceRequest->amountDue() > 0)
+                                <span>Due <x-peso :amount="$serviceRequest->amountDue()" /></span>
+                            @endif
+                        </span>
+                    </span>
+                    <i class="bi bi-chevron-right row-chevron" aria-hidden="true"></i>
+                </button>
+            @empty
+                <p class="text-center text-secondary p-4 mb-0">
+                    You have no requests yet. <a href="{{ route('resident.requests.create') }}">Start a new request</a>.
+                </p>
+            @endforelse
+        </div>
+
+        <div class="table-responsive d-none d-sm-block">
             <table class="table table-app">
                 <thead>
                 <tr>
@@ -81,26 +104,32 @@
     </div>
 
     @if ($tracked)
-        @php($latestLog = $tracked->logs->sortByDesc('id')->first())
-        <div class="panel p-3" id="tracker">
+        <div class="panel p-3 d-none d-sm-block" id="tracker">
             <h2 class="h6 fw-bold mb-3">Status Tracker — {{ $tracked->reference_no }} ({{ $tracked->serviceType->name }})</h2>
-            <x-status-tracker :service-request="$tracked" />
-
-            @if ($tracked->status === \App\Enums\RequestStatus::CashPayment)
-                <div class="tracker-note">
-                    Ready for fulfillment. Present reference number <strong>{{ $tracked->reference_no }}</strong> at the barangay hall
-                    and pay <strong><x-peso :amount="$tracked->amountDue()" /></strong> in cash upon receiving your document.
-                </div>
-            @else
-                <div class="tracker-note is-plain">
-                    {{ $tracked->status->residentInstruction() }}
-                    @if ($latestLog?->entry_type === \App\Enums\LogEntryType::Note)
-                        <br><span class="small">Latest note from staff: {{ $latestLog->note }}</span>
-                    @elseif ($latestLog)
-                        <br><span class="small text-secondary">Last updated {{ $latestLog->created_at->format('M j, Y g:i A') }}.</span>
-                    @endif
-                </div>
-            @endif
+            @include('resident._tracker', ['serviceRequest' => $tracked])
         </div>
     @endif
 @endsection
+
+@push('modals')
+    {{-- Phones: each request's tracker opens as a bottom sheet. After submitting, the new request's sheet opens. --}}
+    @foreach ($serviceRequests as $serviceRequest)
+        <div class="modal fade modal-sheet" id="track-{{ $serviceRequest->id }}" tabindex="-1" aria-labelledby="track-{{ $serviceRequest->id }}-label" aria-hidden="true"
+             @if (request()->filled('track') && $tracked?->is($serviceRequest)) data-show-on-phone @endif>
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-body p-4">
+                        <div class="d-flex align-items-start gap-2 mb-3">
+                            <div class="flex-grow-1">
+                                <h2 class="h5 fw-bold mb-0" id="track-{{ $serviceRequest->id }}-label">{{ $serviceRequest->serviceType->name }}</h2>
+                                <div class="ref-no">{{ $serviceRequest->reference_no }} · Submitted {{ $serviceRequest->received_at->format('M j, Y') }}</div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        @include('resident._tracker', ['serviceRequest' => $serviceRequest])
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endforeach
+@endpush

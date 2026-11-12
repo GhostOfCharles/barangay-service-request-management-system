@@ -50,19 +50,41 @@
                                 <span class="badge text-bg-warning">Temporary password</span>
                             @endif
                         </td>
-                        <td class="text-end">
-                            @if ($user->isResident())
-                                @if ($user->resident)
-                                    <a href="{{ route('residents.show', $user->resident) }}" class="small me-2 text-nowrap">Resident record</a>
-                                @endif
-                            @else
-                                <a href="{{ route('admin.users.edit', $user) }}" class="small me-2 text-nowrap">Edit</a>
-                            @endif
-                            <form method="POST" action="{{ route('admin.users.reset-password', $user) }}" class="d-inline"
+                        <td class="text-end text-nowrap">
+                            <form method="POST" action="{{ route('admin.users.reset-password', $user) }}" id="reset-password-{{ $user->id }}" class="d-none"
                                   onsubmit="return confirm('Reset the password for {{ $user->username }}? A temporary password will be issued.');">
                                 @csrf
-                                <button type="submit" class="btn btn-link btn-sm p-0 small text-danger">Reset Password</button>
                             </form>
+
+                            {{-- Wider screens: the actions as links. --}}
+                            <span class="d-none d-sm-inline">
+                                @if ($user->isResident())
+                                    @if ($user->resident)
+                                        <a href="{{ route('residents.show', $user->resident) }}" class="small me-2">Resident record</a>
+                                    @endif
+                                @else
+                                    <a href="{{ route('admin.users.edit', $user) }}" class="small me-2">Edit</a>
+                                @endif
+                                <button type="submit" form="reset-password-{{ $user->id }}" class="btn btn-link btn-sm p-0 small text-danger">Reset Password</button>
+                            </span>
+
+                            {{-- Phones: the same actions in a menu, so the row fits the screen. --}}
+                            <div class="dropdown d-sm-none">
+                                <button type="button" class="btn btn-light border btn-sm px-2" data-bs-toggle="dropdown" aria-expanded="false"
+                                        aria-label="Actions for {{ $user->name }}">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    @if ($user->isResident())
+                                        @if ($user->resident)
+                                            <li><a class="dropdown-item py-2" href="{{ route('residents.show', $user->resident) }}">Resident record</a></li>
+                                        @endif
+                                    @else
+                                        <li><a class="dropdown-item py-2" href="{{ route('admin.users.edit', $user) }}">Edit</a></li>
+                                    @endif
+                                    <li><button type="submit" form="reset-password-{{ $user->id }}" class="dropdown-item py-2 text-danger">Reset Password</button></li>
+                                </ul>
+                            </div>
                         </td>
                     </tr>
                 @endforeach

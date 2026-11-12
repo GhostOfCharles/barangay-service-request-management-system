@@ -4,7 +4,10 @@
 @section('reopenModal', $errors->newTicket->any() ? 'newTicketModal' : '')
 
 @section('content')
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    {{-- Phones show either the list or one ticket's thread; the thread only when a ticket was tapped. --}}
+    @php($threadOnly = $selected && request()->filled('ticket'))
+
+    <div @class(['d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3', 'd-none d-lg-flex' => $threadOnly])>
         <div>
             <h1 class="page-title">Support Tickets</h1>
             <p class="page-subtitle mb-0">Send a concern to barangay staff. Replies are not live; staff answer during office hours.</p>
@@ -22,11 +25,11 @@
         </div>
     @else
         <div class="row g-3">
-            <div class="col-lg-5">
+            <div @class(['col-lg-5', 'd-none d-lg-block' => $threadOnly])>
                 <div class="ticket-list">
                     @foreach ($tickets as $ticket)
                         <a href="{{ route('resident.tickets.index', ['ticket' => $ticket->id]) }}"
-                           @class(['ticket-card', 'is-selected' => $selected?->is($ticket)])
+                           @class(['ticket-card', 'is-selected' => $selected?->is($ticket), 'is-default' => $selected?->is($ticket) && ! $threadOnly])
                            @if ($selected?->is($ticket)) aria-current="true" @endif>
                             <div class="ticket-card-title">{{ $ticket->ticket_no }} · {{ $ticket->subject }}</div>
                             <div class="ticket-card-meta">
@@ -41,13 +44,14 @@
                     @endforeach
                 </div>
             </div>
-            <div class="col-lg-7">
+            <div @class(['col-lg-7', 'd-none d-lg-block' => ! $threadOnly])>
                 @if ($selected)
                     @include('tickets._thread', [
                         'ticket' => $selected,
                         'replyRoute' => route('resident.tickets.reply', $selected),
                         'closeRoute' => route('resident.tickets.close', $selected),
                         'note' => 'Replying sets the ticket back to Open for staff. Close it when your concern is resolved.',
+                        'backRoute' => route('resident.tickets.index'),
                     ])
                 @endif
             </div>
@@ -57,12 +61,15 @@
 
 @push('modals')
     <div class="modal fade" id="newTicketModal" tabindex="-1" aria-labelledby="newTicketModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content">
-                <form method="POST" action="{{ route('resident.tickets.store') }}" novalidate>
+                <form method="POST" action="{{ route('resident.tickets.store') }}" novalidate class="d-contents">
                     @csrf
+                    <div class="modal-form-header">
+                        <h2 class="h5 fw-bold" id="newTicketModalLabel">New Ticket</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                     <div class="modal-body p-4">
-                        <h2 class="h6 fw-bold mb-3" id="newTicketModalLabel">New Ticket</h2>
 
                         <div class="mb-3">
                             <label for="ticket-subject" class="form-label">Subject</label>
@@ -88,7 +95,7 @@
                             @enderror
                         </div>
 
-                        <div class="mb-3">
+                        <div>
                             <label for="ticket-message" class="form-label">Message</label>
                             <textarea id="ticket-message" name="message" rows="4" required
                                       class="form-control @error('message', 'newTicket') is-invalid @enderror"
@@ -98,10 +105,10 @@
                             @enderror
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success">Send Ticket</button>
-                        </div>
+                    </div>
+                    <div class="modal-form-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Send Ticket</button>
                     </div>
                 </form>
             </div>

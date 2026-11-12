@@ -88,9 +88,9 @@
                     <tr>
                         <th>Service Type</th>
                         <th class="text-end">Total</th>
-                        <th class="text-end">Completed</th>
-                        <th class="text-end">Pending</th>
-                        <th class="text-end">Cash Collected</th>
+                        <th class="text-end"><span class="d-sm-none">Done</span><span class="d-none d-sm-inline">Completed</span></th>
+                        <th class="text-end d-none d-sm-table-cell">Pending</th>
+                        <th class="text-end">Cash<span class="d-none d-sm-inline"> Collected</span></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -99,7 +99,7 @@
                             <td class="fw-medium">{{ $row->name }}</td>
                             <td class="text-end">{{ $row->total }}</td>
                             <td class="text-end">{{ $row->completed }}</td>
-                            <td class="text-end">{{ $row->total - $row->completed }}</td>
+                            <td class="text-end d-none d-sm-table-cell">{{ $row->total - $row->completed }}</td>
                             <td class="text-end"><x-peso :amount="$row->cash_collected" /></td>
                         </tr>
                     @endforeach
@@ -109,7 +109,7 @@
                         <td>All service types</td>
                         <td class="text-end">{{ $totalCount }}</td>
                         <td class="text-end">{{ $byServiceType->sum('completed') }}</td>
-                        <td class="text-end">{{ $totalCount - $byServiceType->sum('completed') }}</td>
+                        <td class="text-end d-none d-sm-table-cell">{{ $totalCount - $byServiceType->sum('completed') }}</td>
                         <td class="text-end"><x-peso :amount="$cashCollected" /></td>
                     </tr>
                     </tfoot>

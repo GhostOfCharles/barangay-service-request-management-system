@@ -19,18 +19,18 @@
             <h1 class="page-title">Dashboard</h1>
             <p class="page-subtitle mb-0">Today is {{ today()->format('M j, Y') }} · Welcome back, {{ auth()->user()->name }}</p>
         </div>
-        <div class="page-actions d-flex gap-2">
+        <div class="page-actions is-pair d-flex gap-2">
             <a href="{{ route('service-requests.index', ['new' => 1]) }}" class="btn btn-success">
-                <i class="bi bi-plus-lg"></i> New Service Request
+                <i class="bi bi-plus-lg"></i> New <span class="d-none d-sm-inline">Service </span>Request
             </a>
             <a href="{{ route('residents.index') }}" class="btn btn-outline-secondary bg-white">
-                <i class="bi bi-search"></i> Search Resident
+                <i class="bi bi-search"></i> <span class="d-none d-sm-inline">Search </span>Resident<span class="d-sm-none">s</span>
             </a>
         </div>
     </div>
 
     {{-- Requests by status: each card opens Service Requests with that filter applied. --}}
-    <div class="row g-3 mb-3 row-cols-2 row-cols-md-3 row-cols-xl-5">
+    <div class="row g-3 mb-3 row-cols-2 row-cols-md-3 row-cols-xl-5 stat-grid">
         @foreach ($statusCards as [$status, $class])
             <div class="col">
                 <a href="{{ route('service-requests.index', ['status' => $status->value]) }}" class="stat-link">
@@ -51,8 +51,8 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-3">
-        <div class="col-md-4">
+    <div class="row g-3 mb-3 stat-grid">
+        <div class="col-4">
             <a href="{{ route('residents.index', ['verification' => 'pending']) }}" class="stat-link">
                 <div class="stat-card stat-pending">
                     <div class="stat-label">Pending Verifications</div>
@@ -60,7 +60,7 @@
                 </div>
             </a>
         </div>
-        <div class="col-md-4">
+        <div class="col-4">
             <a href="{{ route('tickets.index', ['status' => 'open']) }}" class="stat-link">
                 <div class="stat-card stat-progress">
                     <div class="stat-label">Open Tickets</div>
@@ -68,7 +68,7 @@
                 </div>
             </a>
         </div>
-        <div class="col-md-4">
+        <div class="col-4">
             <a href="{{ route('residents.index', ['verification' => 'verified']) }}" class="stat-link">
                 <div class="stat-card stat-plain">
                     <div class="stat-label">Total Residents</div>
@@ -106,7 +106,7 @@
                         <td class="d-none d-md-table-cell">{{ $serviceRequest->serviceType->name }}</td>
                         <td><x-status-badge :status="$serviceRequest->status" /></td>
                         <td class="d-none d-sm-table-cell text-nowrap">{{ $serviceRequest->received_at->format('M j, Y') }}</td>
-                        <td class="text-end text-nowrap"><a href="{{ route('service-requests.show', $serviceRequest) }}" class="small">View<span class="d-none d-xl-inline"> Details</span></a></td>
+                        <td class="text-end text-nowrap"><a href="{{ route('service-requests.show', $serviceRequest) }}" class="small"><span class="d-none d-sm-inline">View<span class="d-none d-xl-inline"> Details</span></span><i class="bi bi-chevron-right row-chevron d-sm-none" aria-hidden="true"></i><span class="visually-hidden d-sm-none">View {{ $serviceRequest->reference_no }}</span></a></td>
                     </tr>
                 @empty
                     <tr>

@@ -36,14 +36,16 @@
                 <h2 class="h6 fw-bold mb-3">Update Status</h2>
 
                 @if ($staffCanUpdate)
-                    <form method="POST" action="{{ route('service-requests.status', $serviceRequest) }}" class="d-flex flex-wrap gap-2" novalidate>
+                    {{-- Phones use the "Move to" bar pinned at the bottom of the screen instead of this form. --}}
+                    <p class="d-lg-none mb-0">Next step: <strong>{{ $nextStatus->label() }}</strong>. Use the button at the bottom of the screen.</p>
+                    <form method="POST" action="{{ route('service-requests.status', $serviceRequest) }}" id="update-status-form" class="d-none d-lg-flex flex-wrap gap-2" novalidate>
                         @csrf
                         @method('PATCH')
                         <label for="status" class="visually-hidden">Next status</label>
                         <select id="status" name="status" class="form-select flex-grow-1 @error('status', 'updateStatus') is-invalid @enderror" style="max-width: 260px;">
                             <option value="{{ $nextStatus->value }}">{{ $nextStatus->label() }}</option>
                         </select>
-                        <button type="submit" class="btn btn-success">Update Status</button>
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirmStatusModal">Update Status</button>
                     </form>
                 @elseif ($serviceRequest->status === RequestStatus::Completed)
                     <p class="mb-0">This request is completed{{ $serviceRequest->completed_at ? ' on '.$serviceRequest->completed_at->format('M j, Y') : '' }}.</p>
@@ -58,9 +60,9 @@
                 @if ($serviceRequest->status !== RequestStatus::Completed)
                     <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
                         @if ($canComplete)
-                            <form method="POST" action="{{ route('service-requests.complete', $serviceRequest) }}">
+                            <form method="POST" action="{{ route('service-requests.complete', $serviceRequest) }}" id="complete-form">
                                 @csrf
-                                <button type="submit" class="btn btn-outline-success">Mark Completed</button>
+                                <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#confirmCompleteModal">Mark Completed</button>
                             </form>
                         @else
                             <button type="button" class="btn btn-light border" disabled aria-describedby="complete-hint">Mark Completed</button>
@@ -120,4 +122,66 @@
             </div>
         </div>
     </div>
+
+    {{-- Phones: the next step stays pinned above the tab bar while reading the request. --}}
+    @if ($staffCanUpdate)
+        <div class="action-bar">
+            <span class="action-bar-label">Next step</span>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirmStatusModal">
+                Move to {{ $nextStatus->label() }}
+            </button>
+        </div>
+    @elseif ($canComplete)
+        <div class="action-bar">
+            <span class="action-bar-label">Last step</span>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirmCompleteModal">Mark Completed</button>
+        </div>
+    @endif
 @endsection
+
+@push('modals')
+    {{-- Status changes cannot be undone (one step at a time), so each one is confirmed first. --}}
+    @if ($staffCanUpdate)
+        <div class="modal fade modal-sheet" id="confirmStatusModal" tabindex="-1" aria-labelledby="confirmStatusModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body p-4">
+                        <h2 class="h5 fw-bold mb-2" id="confirmStatusModalLabel">Move to {{ $nextStatus->label() }}?</h2>
+                        <p class="text-secondary mb-4">
+                            {{ $serviceRequest->reference_no }} for {{ $serviceRequest->resident->full_name }} moves from
+                            {{ $serviceRequest->status->label() }} to {{ $nextStatus->label() }}. Requests cannot go back a step.
+                        </p>
+                        <div class="sheet-actions d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" form="update-status-form" class="btn btn-success">Move to {{ $nextStatus->label() }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($canComplete && $serviceRequest->status !== RequestStatus::Completed)
+        <div class="modal fade modal-sheet" id="confirmCompleteModal" tabindex="-1" aria-labelledby="confirmCompleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body p-4">
+                        <h2 class="h5 fw-bold mb-2" id="confirmCompleteModalLabel">Mark {{ $serviceRequest->reference_no }} completed?</h2>
+                        <p class="text-secondary mb-4">
+                            @if ($serviceRequest->hasFee())
+                                Confirm that {{ $serviceRequest->resident->full_name }} paid <x-peso :amount="$serviceRequest->fee_amount" /> in cash and received the document.
+                            @else
+                                Confirm that {{ $serviceRequest->resident->full_name }} received the document or service.
+                            @endif
+                            This closes the request.
+                        </p>
+                        <div class="sheet-actions d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" form="complete-form" class="btn btn-success">Mark Completed</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+@endpush

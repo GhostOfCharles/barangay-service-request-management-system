@@ -17,37 +17,56 @@
     </div>
 
     {{-- Search by reference number or name; filter by service type, status, and date (FR-06). --}}
+    {{-- On phones the search box stays on the page and the other filters open in a bottom sheet. --}}
+    @php($activeFilterCount = count(array_filter(\Illuminate\Support\Arr::only($filters, ['service_type', 'status', 'date_from', 'date_to']))))
     <form method="GET" action="{{ route('service-requests.index') }}" class="filter-bar d-flex flex-wrap align-items-center gap-2 mb-3" role="search">
-        <div class="input-group" style="max-width: 280px;">
+        <div class="input-group filter-search" style="max-width: 280px;">
             <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
             <input type="search" name="search" value="{{ $filters['search'] ?? '' }}" class="form-control border-start-0"
-                   placeholder="Reference no. or resident name…" aria-label="Search requests">
+                   placeholder="Reference no. or resident name…" aria-label="Search requests" enterkeyhint="search">
         </div>
 
-        <select name="service_type" class="form-select" style="max-width: 220px;" aria-label="Filter by service type">
-            <option value="">All Service Types</option>
-            @foreach ($serviceTypes as $serviceType)
-                <option value="{{ $serviceType->id }}" @selected((string) ($filters['service_type'] ?? '') === (string) $serviceType->id)>{{ $serviceType->name }}</option>
-            @endforeach
-        </select>
+        <button type="button" class="btn btn-outline-secondary bg-white filter-toggle d-md-none" data-bs-toggle="offcanvas" data-bs-target="#requestFilters"
+                aria-controls="requestFilters">
+            <i class="bi bi-sliders"></i> Filters
+            @if ($activeFilterCount)
+                <span class="filter-count">{{ $activeFilterCount }}<span class="visually-hidden"> active</span></span>
+            @endif
+        </button>
 
-        <select name="status" class="form-select" style="max-width: 190px;" aria-label="Filter by status">
-            <option value="">All Statuses</option>
-            @foreach ($statuses as $status)
-                <option value="{{ $status->value }}" @selected(($filters['status'] ?? '') === $status->value)>{{ $status->label() }}</option>
-            @endforeach
-        </select>
+        <div class="offcanvas-md offcanvas-bottom filter-sheet" tabindex="-1" id="requestFilters" aria-labelledby="requestFiltersLabel">
+            <div class="offcanvas-header">
+                <h2 class="offcanvas-title h6 fw-bold" id="requestFiltersLabel">Filter requests</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#requestFilters" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <select name="service_type" class="form-select" style="max-width: 220px;" aria-label="Filter by service type">
+                    <option value="">All Service Types</option>
+                    @foreach ($serviceTypes as $serviceType)
+                        <option value="{{ $serviceType->id }}" @selected((string) ($filters['service_type'] ?? '') === (string) $serviceType->id)>{{ $serviceType->name }}</option>
+                    @endforeach
+                </select>
 
-        <div class="date-range d-flex align-items-center gap-1">
-            <input type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}" class="form-control" aria-label="Received from" title="Received from">
-            <span class="text-secondary small">to</span>
-            <input type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}" class="form-control" aria-label="Received to" title="Received to">
+                <select name="status" class="form-select" style="max-width: 190px;" aria-label="Filter by status">
+                    <option value="">All Statuses</option>
+                    @foreach ($statuses as $status)
+                        <option value="{{ $status->value }}" @selected(($filters['status'] ?? '') === $status->value)>{{ $status->label() }}</option>
+                    @endforeach
+                </select>
+
+                <div class="date-range d-flex align-items-center gap-1">
+                    <input type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}" class="form-control" aria-label="Received from" title="Received from">
+                    <span class="text-secondary small">to</span>
+                    <input type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}" class="form-control" aria-label="Received to" title="Received to">
+                </div>
+
+                <button type="submit" class="btn btn-outline-secondary bg-white d-none d-md-inline-block">Search</button>
+                <button type="submit" class="btn btn-success d-md-none">Show results</button>
+                @if (array_filter($filters))
+                    <a href="{{ route('service-requests.index') }}" class="btn btn-link text-secondary">Clear<span class="d-md-none"> filters</span></a>
+                @endif
+            </div>
         </div>
-
-        <button type="submit" class="btn btn-outline-secondary bg-white">Search</button>
-        @if (array_filter($filters))
-            <a href="{{ route('service-requests.index') }}" class="btn btn-link text-secondary">Clear</a>
-        @endif
     </form>
 
     <div class="panel">
@@ -78,7 +97,7 @@
                         <td><x-status-badge :status="$serviceRequest->status" /></td>
                         <td class="d-none d-sm-table-cell text-end"><x-peso :amount="$serviceRequest->fee_amount" /></td>
                         <td class="d-none d-md-table-cell text-nowrap">{{ $serviceRequest->received_at->format('M j, Y') }}</td>
-                        <td class="text-end text-nowrap"><a href="{{ route('service-requests.show', $serviceRequest) }}" class="small">View<span class="d-none d-xl-inline"> Details</span></a></td>
+                        <td class="text-end text-nowrap"><a href="{{ route('service-requests.show', $serviceRequest) }}" class="small"><span class="d-none d-sm-inline">View<span class="d-none d-xl-inline"> Details</span></span><i class="bi bi-chevron-right row-chevron d-sm-none" aria-hidden="true"></i><span class="visually-hidden d-sm-none">View {{ $serviceRequest->reference_no }}</span></a></td>
                     </tr>
                 @empty
                     <tr>
@@ -102,8 +121,11 @@
             <div class="modal-content">
                 <form method="POST" action="{{ route('service-requests.store') }}" enctype="multipart/form-data" novalidate data-submission-form class="d-contents">
                     @csrf
+                    <div class="modal-form-header">
+                        <h2 class="h5 fw-bold" id="newRequestModalLabel">Add New Service Request <span class="fw-normal text-secondary d-block d-sm-inline fs-6">(Staff-Assisted)</span></h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                     <div class="modal-body p-4">
-                        <h2 class="h5 fw-bold mb-3" id="newRequestModalLabel">Add New Service Request <span class="fw-normal text-secondary">(Staff-Assisted)</span></h2>
 
                         @php($selectedResident = $residents->firstWhere('id', (int) old('resident_id', request('resident'))))
 
@@ -141,12 +163,12 @@
                             </x-slot:after>
                         </x-submission-fields>
 
-                        <p class="small text-secondary mt-3">Use this form when a resident visits the office and cannot submit online. A reference number is generated on save.</p>
-                        <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
-                            <span class="small text-secondary me-auto" data-submit-hint aria-live="polite"></span>
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success" data-submit>Save Request</button>
-                        </div>
+                        <p class="small text-secondary mt-3 mb-0">Use this form when a resident visits the office and cannot submit online. A reference number is generated on save.</p>
+                    </div>
+                    <div class="modal-form-footer">
+                        <span class="small text-secondary me-auto footer-hint" data-submit-hint aria-live="polite"></span>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success" data-submit>Save Request</button>
                     </div>
                 </form>
             </div>

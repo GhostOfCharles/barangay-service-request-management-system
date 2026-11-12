@@ -35,7 +35,7 @@
         <div class="pill-group" role="group" aria-label="Filter by verification">
             <a href="{{ route('residents.index', $baseQuery) }}" @class(['active' => ! $verification])>All</a>
             <a href="{{ route('residents.index', [...$baseQuery, 'verification' => 'verified']) }}" @class(['active' => $verification === VerificationStatus::Verified])>Verified</a>
-            <a href="{{ route('residents.index', [...$baseQuery, 'verification' => 'pending']) }}" @class(['active' => $verification === VerificationStatus::Pending])>Pending Verification</a>
+            <a href="{{ route('residents.index', [...$baseQuery, 'verification' => 'pending']) }}" @class(['active' => $verification === VerificationStatus::Pending])>Pending<span class="d-none d-sm-inline"> Verification</span></a>
         </div>
     </form>
 
@@ -54,7 +54,10 @@
                 </thead>
                 <tbody>
                 @forelse ($residents as $resident)
-                    <tr @class(['table-active' => $reviewing?->is($resident)])>
+                    @php($rowLink = $resident->verification_status === VerificationStatus::Pending
+                        ? route('residents.index', [...request()->except('review', 'page'), 'review' => $resident->id]).'#verify'
+                        : route('residents.show', $resident))
+                    <tr @class(['table-active' => $reviewing?->is($resident)]) data-href="{{ $rowLink }}">
                         <td class="fw-medium">
                             {{ $resident->full_name }}
                             <div class="cell-sub d-sm-none">{{ $resident->purok }}</div>
@@ -65,9 +68,9 @@
                         <td><x-status-badge :status="$resident->verification_status" kind="verification" /></td>
                         <td class="text-end text-nowrap">
                             @if ($resident->verification_status === VerificationStatus::Pending)
-                                <a href="{{ route('residents.index', [...request()->except('review', 'page'), 'review' => $resident->id]) }}#verify" class="small fw-semibold">Review ID</a>
+                                <a href="{{ $rowLink }}" class="small fw-semibold">Review ID</a>
                             @else
-                                <a href="{{ route('residents.show', $resident) }}" class="small">View</a>
+                                <a href="{{ $rowLink }}" class="small"><span class="d-none d-sm-inline">View</span><i class="bi bi-chevron-right row-chevron d-sm-none" aria-hidden="true"></i><span class="visually-hidden d-sm-none">View {{ $resident->full_name }}</span></a>
                             @endif
                         </td>
                     </tr>
@@ -148,17 +151,20 @@
 @push('modals')
     {{-- Screen 8: Add New Resident --}}
     <div class="modal fade" id="addResidentModal" tabindex="-1" aria-labelledby="addResidentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
             <div class="modal-content">
-                <form method="POST" action="{{ route('residents.store') }}" enctype="multipart/form-data" novalidate>
+                <form method="POST" action="{{ route('residents.store') }}" enctype="multipart/form-data" novalidate class="d-contents">
                     @csrf
+                    <div class="modal-form-header">
+                        <h2 class="h5 fw-bold" id="addResidentModalLabel">Add New Resident</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                     <div class="modal-body p-4">
-                        <h2 class="h5 fw-bold mb-3" id="addResidentModalLabel">Add New Resident</h2>
                         @include('residents._form-fields', ['bag' => 'createResident', 'resident' => null])
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success">Save Resident</button>
-                        </div>
+                    </div>
+                    <div class="modal-form-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Save Resident</button>
                     </div>
                 </form>
             </div>

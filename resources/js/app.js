@@ -53,4 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
             bootstrap.Modal.getOrCreateInstance(element).show();
         }
     }
+
+    // Phones show some details as bottom sheets instead of inline panels (e.g. the request
+    // tracker after submitting), so open the marked sheet on small screens only.
+    const phoneSheet = document.querySelector('[data-show-on-phone]');
+
+    if (!modalToReopen && phoneSheet && window.matchMedia('(max-width: 575.98px)').matches) {
+        bootstrap.Modal.getOrCreateInstance(phoneSheet).show();
+    }
 });
