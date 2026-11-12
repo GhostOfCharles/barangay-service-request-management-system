@@ -1,9 +1,1409 @@
-@import 'tailwindcss';
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.min.css';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+/*
+ * Barangay San Rafael theme — colors follow the planning document's wireframes.
+ */
+:root {
+    --brgy-green: #2e7d32;
+    --brgy-green-dark: #1b5e20;
+    --brgy-sidebar: #1e5a24;
+    --brgy-bg: #f6f7f5;
+    --brgy-border: #e6e9e4;
+    --brgy-muted: #5a675e;
+    --bs-font-sans-serif: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --bs-body-bg: var(--brgy-bg);
+    --bs-body-color: #1f2a22;
+    --bs-link-color: var(--brgy-green);
+    --bs-link-color-rgb: 46, 125, 50;
+    --bs-link-hover-color: var(--brgy-green-dark);
+}
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+body {
+    font-size: 0.925rem;
+}
+
+.btn-success {
+    --bs-btn-bg: var(--brgy-green);
+    --bs-btn-border-color: var(--brgy-green);
+    --bs-btn-hover-bg: var(--brgy-green-dark);
+    --bs-btn-hover-border-color: var(--brgy-green-dark);
+    --bs-btn-active-bg: var(--brgy-green-dark);
+    font-weight: 600;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #81c784;
+    box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.15);
+}
+
+/* ---------- App shell ---------- */
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.app-sidebar {
+    --bs-offcanvas-width: 260px;
+    --bs-offcanvas-bg: var(--brgy-sidebar);
+    --bs-offcanvas-color: #fff;
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--brgy-sidebar);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 992px) {
+    .app-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        /* Bootstrap's .offcanvas-lg makes the sidebar transparent on large screens. */
+        background-color: var(--brgy-sidebar) !important;
+    }
+}
+
+.brand-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    display: grid;
+    place-items: center;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.mobile-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--brgy-sidebar);
+    color: #fff;
+}
+
+.mobile-topbar .brand-title {
+    font-weight: 700;
+}
+
+.app-sidebar .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-sidebar .brand-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    line-height: 1.1;
+}
+
+.app-sidebar .brand-sub,
+.app-sidebar .user-role {
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.app-sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.85);
+    border-radius: 8px;
+    padding: 0.55rem 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-weight: 500;
+}
+
+.app-sidebar .nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.app-sidebar .nav-link.active {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-weight: 600;
+}
+
+.app-sidebar .sidebar-footer {
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.75rem;
+}
+
+.app-sidebar .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: grid;
+    place-items: center;
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+.app-main {
+    flex: 1;
+    min-width: 0;
+    padding: 1.5rem;
+}
+
+.page-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+}
+
+.page-subtitle {
+    color: var(--brgy-muted);
+    font-size: 0.85rem;
+}
+
+/* ---------- Cards & tables ---------- */
+.panel {
+    background: #fff;
+    border: 1px solid var(--brgy-border);
+    border-radius: 12px;
+}
+
+.panel-header {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--brgy-border);
+    font-weight: 600;
+}
+
+.table-app {
+    margin-bottom: 0;
+}
+
+.table-app thead th {
+    background: #f8faf8;
+    color: var(--brgy-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border-bottom-color: var(--brgy-border);
+    padding: 0.7rem 1rem;
+    white-space: nowrap;
+}
+
+.table-app td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+    border-color: var(--brgy-border);
+}
+
+.table-app a,
+.panel-header a,
+.page-title + .page-subtitle a,
+a.small {
+    text-decoration: none;
+}
+
+.table-app a:hover,
+a.small:hover {
+    text-decoration: underline;
+}
+
+.ref-no {
+    white-space: nowrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8125rem;
+    color: #3d4a41;
+}
+
+.stat-card {
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--brgy-border);
+    background: #fff;
+    height: 100%;
+}
+
+.stat-card .stat-label {
+    font-size: 0.8125rem;
+    color: #4b5a4f;
+}
+
+.stat-card .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.stat-pending { background: #fffbea; border-color: #fbe9a6; }
+.stat-pending .stat-value { color: #c2570c; }
+.stat-progress { background: #eef7ff; border-color: #c9e3fb; }
+.stat-progress .stat-value { color: #0b6aa2; }
+.stat-completed { background: #e8f5e9; border-color: #b9dfbb; }
+.stat-completed .stat-value { color: var(--brgy-green); }
+.stat-residents { background: #faf3ff; border-color: #ead5fb; }
+.stat-residents .stat-value { color: #7b1fa2; }
+.stat-submitted { background: #f0f3ff; border-color: #d6defa; }
+.stat-submitted .stat-value { color: #3949ab; }
+.stat-cash { background: #f6effe; border-color: #e2d0fb; }
+.stat-cash .stat-value { color: #6b2fb3; }
+.stat-plain .stat-value { color: #1f2a22; }
+a.stat-link { color: inherit; text-decoration: none; display: block; height: 100%; }
+a.stat-link:hover .stat-card { border-color: var(--brgy-green); }
+a.stat-link:focus-visible { outline: 3px solid var(--brgy-green); outline-offset: 2px; border-radius: 12px; }
+
+.dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.35rem;
+}
+
+/* ---------- Status badges ---------- */
+.status-badge {
+    display: inline-block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid;
+    white-space: nowrap;
+}
+
+/* Request workflow (FR-04), colours as in the wireframes */
+.status-request-submitted { background: #f1f3f5; color: #4a5560; border-color: #d3d8dd; }
+.status-request-under_review { background: #fff8e1; color: #a15c00; border-color: #f5c96b; }
+.status-request-approved { background: #e8f4fd; color: #0b6aa2; border-color: #90c8ee; }
+.status-request-cash_payment { background: #f3ecfd; color: #6b2fb3; border-color: #cdb3f2; }
+.status-request-completed { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+
+/* Tickets (FR-13) */
+.status-ticket-open { background: #fff8e1; color: #a15c00; border-color: #f5c96b; }
+.status-ticket-answered { background: #e8f4fd; color: #0b6aa2; border-color: #90c8ee; }
+.status-ticket-closed { background: #f1f3f5; color: #4a5560; border-color: #d3d8dd; }
+
+/* Residency verification (FR-09) and login accounts */
+.status-verification-verified, .status-account-active { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+.status-verification-pending, .status-account-pending { background: #fff8e1; color: #a15c00; border-color: #f5c96b; }
+.status-verification-rejected, .status-account-rejected { background: #fdecec; color: #b42318; border-color: #f5b5b0; }
+.status-account-inactive { background: #f1f3f5; color: #4a5560; border-color: #d3d8dd; }
+
+/* ---------- Status filter pills ---------- */
+.pill-group {
+    display: inline-flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: #fff;
+    border: 1px solid var(--brgy-border);
+    border-radius: 8px;
+}
+
+.pill-group a {
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    color: #1f2a22;
+    text-decoration: none;
+}
+
+.pill-group a.active {
+    background: var(--brgy-green);
+    color: #fff;
+    font-weight: 600;
+}
+
+/* ---------- Request history timeline ---------- */
+.timeline {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.timeline li {
+    position: relative;
+    padding: 0 0 1.1rem 1.5rem;
+    border-left: 2px solid var(--brgy-border);
+    margin-left: 0.4rem;
+}
+
+.timeline li:last-child {
+    border-left-color: transparent;
+}
+
+.timeline li::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--brgy-green);
+}
+
+/* ---------- Category bars (reports) ---------- */
+.category-bar {
+    height: 8px;
+    border-radius: 999px;
+    background: #eef0ed;
+    overflow: hidden;
+}
+
+.category-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+}
+
+/* ---------- Login ---------- */
+.login-wrap {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+}
+
+.login-logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+    background: var(--brgy-green);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 1.75rem;
+    margin: 0 auto 1rem;
+}
+
+/* ---------- Phones and tablets ---------- */
+@media (max-width: 991.98px) {
+    .app-shell {
+        flex-direction: column;
+    }
+
+    .app-sidebar .nav-link {
+        padding: 0.75rem 0.85rem;
+    }
+
+    .app-main {
+        padding: 1rem 0.75rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    body {
+        font-size: 0.95rem;
+    }
+
+    /* Page-header buttons and filter controls take the full width on phones. */
+    .page-actions,
+    .page-actions > .btn,
+    .filter-bar > * {
+        width: 100%;
+    }
+
+    .page-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-bar .input-group,
+    .filter-bar .form-select {
+        max-width: none !important;
+    }
+
+    .filter-bar .pill-group {
+        justify-content: space-between;
+    }
+
+    .filter-bar .date-range input {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .table-app td,
+    .table-app thead th {
+        padding: 0.65rem 0.6rem;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.5rem;
+    }
+}
+
+/* Extra details shown under the main cell when other columns are hidden on phones. */
+.cell-sub {
+    font-size: 0.8125rem;
+    color: var(--brgy-muted);
+    font-weight: 400;
+}
+
+@media print {
+    .app-sidebar,
+    .mobile-topbar,
+    .btn,
+    form[role='search'] {
+        display: none !important;
+    }
+}
+
+/* ---------- Tappable table rows ---------- */
+tr[data-href] {
+    cursor: pointer;
+}
+
+tr[data-href]:hover > td {
+    background-color: #f3f8f3;
+}
+
+/* ---------- Resident picker (New Service Request) ---------- */
+.resident-options {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    z-index: 10;
+    max-height: 280px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.resident-options .list-group-item {
+    padding: 0.6rem 0.85rem;
+    cursor: pointer;
+}
+
+.resident-options .list-group-item.active {
+    background-color: #e8f5e9;
+    border-color: var(--brgy-border);
+    color: var(--bs-body-color);
+}
+
+/* ---------- Larger tap targets on phones ---------- */
+@media (max-width: 575.98px) {
+    .pill-group a {
+        padding: 0.6rem 0.5rem;
+        flex: 1;
+        text-align: center;
+    }
+
+    .table-app td {
+        padding-top: 0.85rem;
+        padding-bottom: 0.85rem;
+    }
+}
+
+.resident-options .list-group-item-action {
+    color: var(--bs-body-color);
+}
+
+/* ---------- Request list sorting ---------- */
+.sort-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.sort-link:hover {
+    color: var(--brgy-green-dark);
+    text-decoration: underline;
+}
+
+/* ---------- Request progress steps ---------- */
+.status-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0 0 1rem;
+    padding: 1rem 1.25rem;
+    list-style: none;
+}
+
+.status-step {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-right: 1rem;
+}
+
+/* The connecting line between markers turns green once the request has passed that step. */
+.status-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: calc(36px + 0.75rem + 6.5rem);
+    right: 0.75rem;
+    height: 2px;
+    background: var(--brgy-border);
+}
+
+.status-step.is-done::after {
+    background: var(--brgy-green);
+}
+
+.step-marker {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid var(--brgy-border);
+    background: #fff;
+    color: var(--brgy-muted);
+    font-weight: 600;
+}
+
+.status-step.is-done .step-marker,
+.status-step.is-current:last-child .step-marker {
+    border-color: var(--brgy-green);
+    background: var(--brgy-green);
+    color: #fff;
+}
+
+.status-step.is-current .step-marker {
+    border-color: var(--brgy-green);
+    color: var(--brgy-green-dark);
+    box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
+}
+
+.step-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.step-name {
+    font-weight: 600;
+    color: var(--brgy-muted);
+}
+
+.status-step.is-done .step-name,
+.status-step.is-current .step-name {
+    color: #1f2a22;
+}
+
+.step-date {
+    font-size: 0.8125rem;
+    color: var(--brgy-muted);
+}
+
+@media (max-width: 767.98px) {
+    .status-steps {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
+    }
+
+    .status-step:not(:last-child)::after {
+        top: 36px;
+        left: 17px;
+        right: auto;
+        width: 2px;
+        height: 0.75rem;
+    }
+}
+
+/* ---------- Office monitors around 1024px: keep the request lists from scrolling sideways ---------- */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .app-main {
+        padding-inline: 1rem;
+    }
+
+    .table-app thead th,
+    .table-app td {
+        padding-inline: 0.6rem;
+    }
+
+    .table-app th:first-child,
+    .table-app td:first-child {
+        padding-left: 1rem;
+    }
+}
+
+/* ---------- Status tracker (Submitted to Completed), as in Screens 3 and 10 ---------- */
+.tracker {
+    display: flex;
+    margin: 0;
+    padding: 0.25rem 0 0;
+    list-style: none;
+}
+
+.tracker-step {
+    position: relative;
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+/* The connecting line runs from each dot to the next; green once that step is passed. */
+.tracker-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: calc(50% + 14px);
+    right: calc(-50% + 14px);
+    height: 3px;
+    background: #d9ded8;
+}
+
+.tracker-step.is-done::after {
+    background: var(--brgy-green-dark);
+}
+
+.tracker-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 3px solid #d9ded8;
+    background: #fff;
+}
+
+.tracker-step.is-done .tracker-dot {
+    border-color: var(--brgy-green-dark);
+    background: var(--brgy-green-dark);
+}
+
+.tracker-step.is-current .tracker-dot {
+    border-color: var(--brgy-green-dark);
+    box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.18);
+}
+
+.tracker-label {
+    font-size: 0.85rem;
+    color: var(--brgy-muted);
+}
+
+.tracker-step.is-done .tracker-label {
+    color: var(--brgy-green-dark);
+}
+
+.tracker-step.is-current .tracker-label {
+    color: #1f2a22;
+    font-weight: 700;
+}
+
+.tracker-date {
+    font-size: 0.75rem;
+    color: var(--brgy-muted);
+}
+
+@media (max-width: 575.98px) {
+    .tracker {
+        flex-direction: column;
+        gap: 0.9rem;
+    }
+
+    .tracker-step {
+        flex-direction: row;
+        text-align: left;
+        gap: 0.6rem;
+    }
+
+    .tracker-step:not(:last-child)::after {
+        top: 26px;
+        left: 10px;
+        right: auto;
+        width: 3px;
+        height: calc(100% - 12px);
+    }
+}
+
+/* Cash payment instruction under the resident's tracker (FR-12) */
+.tracker-note {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: #f3ecfd;
+    color: #4b1f86;
+}
+
+.tracker-note.is-plain {
+    background: #f1f5f1;
+    color: #1f2a22;
+}
+
+/* ---------- Document checklist (Screens 4, 10, 11, 13) ---------- */
+.checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.checklist-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--brgy-border);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.checklist-row.is-attached {
+    border-color: #a5d6a7;
+    background: #f5fbf5;
+}
+
+.checklist-row.is-invalid {
+    border-color: #dc3545;
+}
+
+.checklist-box {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    border-radius: 5px;
+    border: 2px solid #b8c0b9;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 0.8rem;
+}
+
+.checklist-row.is-attached .checklist-box,
+.checklist-box.is-checked {
+    border-color: var(--brgy-green-dark);
+    background: var(--brgy-green-dark);
+}
+
+.checklist-name {
+    flex: 1;
+    min-width: 0;
+}
+
+.checklist-file {
+    font-size: 0.8125rem;
+    color: var(--brgy-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 45%;
+}
+
+.checklist-pick {
+    font-weight: 600;
+    color: var(--brgy-green-dark);
+    cursor: pointer;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.checklist-pick input[type='file'] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.checklist-pick:focus-within {
+    outline: 2px solid var(--brgy-green);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ---------- Tickets (Screens 5 and 12) ---------- */
+.ticket-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.ticket-card {
+    display: block;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--brgy-border);
+    border-radius: 10px;
+    background: #fff;
+    color: inherit;
+    text-decoration: none;
+}
+
+.ticket-card:hover {
+    border-color: #a5d6a7;
+    color: inherit;
+}
+
+.ticket-card.is-selected {
+    border: 2px solid var(--brgy-green-dark);
+    background: #f5fbf5;
+}
+
+.ticket-card-title {
+    font-weight: 600;
+}
+
+.ticket-card-meta {
+    margin-top: 0.3rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+    color: var(--brgy-muted);
+}
+
+.message {
+    max-width: 85%;
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid var(--brgy-border);
+    background: #fff;
+    margin-bottom: 0.75rem;
+}
+
+.message.is-mine {
+    margin-left: auto;
+    background: #e8f5e9;
+    border-color: #cfe8d0;
+}
+
+.message-meta {
+    font-size: 0.78rem;
+    color: var(--brgy-muted);
+    margin-bottom: 0.2rem;
+}
+
+.message-body {
+    white-space: pre-line;
+}
+
+/* ---------- Residency verification panel (Screen 7) ---------- */
+.id-preview {
+    width: 100%;
+    max-width: 320px;
+    min-height: 160px;
+    border: 2px dashed #c6ccc6;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--brgy-muted);
+    overflow: hidden;
+    background: #fafbfa;
+}
+
+.id-preview img,
+.id-preview iframe {
+    width: 100%;
+    height: 220px;
+    object-fit: contain;
+    border: 0;
+}
+
+/* ---------- Request log (Screen 10) ---------- */
+.request-log {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0 0 0 1rem;
+    border-left: 3px solid #cfe8d0;
+}
+
+.request-log li {
+    padding-bottom: 0.85rem;
+}
+
+.request-log-time {
+    font-size: 0.8125rem;
+    color: var(--brgy-muted);
+}
+
+/* Status legend under the request list (Screen 9) */
+.status-legend {
+    margin-top: 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--brgy-muted);
+}
+
+/* Lets a <form> wrap a scrollable modal body without breaking the modal layout. */
+.d-contents {
+    display: contents;
+}
+
+/* =====================================================================
+ * Phone and tablet patterns (below 992px): tab bar, bottom sheets,
+ * pinned form buttons, and the request action bar.
+ * ===================================================================== */
+:root {
+    --bottom-nav-height: 60px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Dialogs and sheets are white, and so are their fields (Bootstrap derives both from the body colour). */
+.modal,
+.filter-sheet {
+    --bs-body-bg: #fff;
+}
+
+.bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1030;
+    display: flex;
+    background: #fff;
+    border-top: 1px solid var(--brgy-border);
+    padding-bottom: var(--safe-bottom);
+    box-shadow: 0 -2px 12px rgba(30, 90, 36, 0.06);
+}
+
+.bottom-nav > a,
+.bottom-nav > button {
+    flex: 1 1 0;
+    min-width: 0;
+    height: var(--bottom-nav-height);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    border: 0;
+    background: none;
+    color: var(--brgy-muted);
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-decoration: none;
+    position: relative;
+}
+
+.bottom-nav i {
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.bottom-nav span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bottom-nav .active {
+    color: var(--brgy-green-dark);
+    font-weight: 700;
+}
+
+/* A short bar above the active tab, so the current page reads without relying on colour alone. */
+.bottom-nav .active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 30%;
+    right: 30%;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: var(--brgy-green);
+}
+
+.bottom-nav > a:focus-visible,
+.bottom-nav > button:focus-visible {
+    outline: 3px solid var(--brgy-green);
+    outline-offset: -3px;
+}
+
+@media (max-width: 991.98px) {
+    .app-main {
+        padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 1.25rem);
+    }
+
+    /* The on-screen keyboard pushes fixed bars up; hide them while typing. */
+    body:has(:is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='submit']), textarea):focus) .bottom-nav,
+    body:has(:is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='submit']), textarea):focus) .action-bar {
+        display: none;
+    }
+}
+
+/* ---------- Bottom sheets: short dialogs slide up from the bottom edge on phones ---------- */
+@media (max-width: 575.98px) {
+    .modal-sheet .modal-dialog {
+        display: flex;
+        align-items: flex-end;
+        min-height: 100%;
+        max-width: none;
+        margin: 0;
+    }
+
+    .modal-sheet .modal-content {
+        border: 0;
+        border-radius: 18px 18px 0 0;
+        padding-bottom: var(--safe-bottom);
+    }
+
+    /* Grab handle */
+    .modal-sheet .modal-content::before {
+        content: '';
+        align-self: center;
+        width: 40px;
+        height: 4px;
+        margin-top: 0.6rem;
+        border-radius: 999px;
+        background: #d4d9d3;
+    }
+
+    .modal-sheet.fade .modal-dialog {
+        transform: translateY(100%);
+        transition: transform 0.25s ease-out;
+    }
+
+    .modal-sheet.show .modal-dialog {
+        transform: none;
+    }
+
+    /* Sheet buttons stack full width, primary action on top, within thumb reach. */
+    .modal-sheet .sheet-actions {
+        flex-direction: column-reverse;
+    }
+
+    .modal-sheet .sheet-actions .btn {
+        width: 100%;
+        padding-block: 0.7rem;
+    }
+}
+
+/* ---------- Form dialogs: header with close, buttons pinned to the bottom ---------- */
+.modal-form-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem 0.85rem 1.5rem;
+    border-bottom: 1px solid var(--brgy-border);
+}
+
+.modal-form-header h2 {
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+.modal-form-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.85rem 1.5rem;
+    border-top: 1px solid var(--brgy-border);
+    background: #fff;
+    border-radius: 0 0 var(--bs-modal-inner-border-radius) var(--bs-modal-inner-border-radius);
+}
+
+@media (max-width: 575.98px) {
+    .modal-form-footer {
+        padding: 0.75rem 1rem calc(0.75rem + var(--safe-bottom));
+        border-radius: 0;
+    }
+
+    .modal-form-footer .btn {
+        flex: 1 1 0;
+        padding-block: 0.65rem;
+    }
+
+    .modal-form-footer .footer-hint {
+        flex-basis: 100%;
+        order: -1;
+    }
+
+    .modal-form-header {
+        padding-left: 1rem;
+    }
+
+    .modal-fullscreen-sm-down .modal-body {
+        padding: 1rem !important;
+    }
+}
+
+/* ---------- Request action bar: the next step stays in reach while reading the request ---------- */
+.action-bar {
+    display: none;
+}
+
+@media (max-width: 991.98px) {
+    .action-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
+        z-index: 1029;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 0.75rem;
+        background: #fff;
+        border-top: 1px solid var(--brgy-border);
+    }
+
+    .action-bar .btn {
+        flex: 1;
+        padding-block: 0.6rem;
+    }
+
+    body:has(.action-bar) .app-main {
+        padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 5rem);
+    }
+}
+
+.action-bar-label {
+    flex: 1;
+    font-size: 0.8125rem;
+    color: var(--brgy-muted);
+    line-height: 1.25;
+}
+
+/* ---------- Filters: inline on desktop, a bottom sheet on phones (Bootstrap offcanvas-md) ---------- */
+/* On wider screens the sheet's fields join the search bar's row, as before. */
+@media (min-width: 768px) {
+    .filter-sheet,
+    .filter-sheet .offcanvas-body {
+        display: contents;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .filter-sheet.offcanvas-bottom {
+        height: auto;
+        max-height: 85vh;
+        border-radius: 18px 18px 0 0;
+        padding-bottom: var(--safe-bottom);
+    }
+
+    .filter-sheet .offcanvas-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .filter-sheet .form-select,
+    .filter-sheet .date-range {
+        max-width: none !important;
+        width: 100%;
+    }
+
+    .filter-sheet .date-range input {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .filter-sheet .btn {
+        width: 100%;
+        padding-block: 0.65rem;
+    }
+
+    /* Search box and Filters button share one row. */
+    .filter-bar > .filter-search {
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto !important;
+        max-width: none !important;
+    }
+
+    .filter-bar > .filter-toggle {
+        flex-shrink: 0;
+        width: auto !important;
+    }
+}
+
+.filter-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--brgy-green);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+/* ---------- Phone lists: tappable rows end in a chevron instead of a "View" link ---------- */
+.row-chevron {
+    color: #9aa59c;
+    font-size: 1rem;
+}
+
+/* ---------- Resident request cards (phones) ---------- */
+.request-cards {
+    display: flex;
+    flex-direction: column;
+}
+
+.request-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 0;
+    border-bottom: 1px solid var(--brgy-border);
+    background: none;
+    text-align: left;
+    color: inherit;
+}
+
+.request-card:last-child {
+    border-bottom: 0;
+}
+
+.request-card:active {
+    background: #f3f8f3;
+}
+
+.request-card:focus-visible {
+    outline: 3px solid var(--brgy-green);
+    outline-offset: -3px;
+}
+
+.request-card-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.request-card-title {
+    font-weight: 600;
+}
+
+.request-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+    margin-top: 0.35rem;
+    font-size: 0.8125rem;
+    color: var(--brgy-muted);
+}
+
+/* ---------- Compact stat cards on phones: less scrolling before the list ---------- */
+@media (max-width: 575.98px) {
+    .stat-card {
+        padding: 0.6rem 0.75rem;
+        border-radius: 10px;
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.3rem;
+    }
+
+    .stat-grid {
+        --bs-gutter-x: 0.5rem;
+        --bs-gutter-y: 0.5rem;
+    }
+
+    .page-actions.is-pair {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .page-title {
+        font-size: 1.15rem;
+    }
+}
+
+/* ---------- Submission form layout (Screens 4 and 11) ----------
+ * Two columns on desktop: fields and buttons on the left, the checklist on the right.
+ * Phones: fields, then the checklist, then the buttons, so Submit comes after the uploads. */
+.submission-layout {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'fields' 'actions' 'docs';
+}
+
+.submission-layout.is-columns {
+    grid-template-areas: 'fields' 'docs' 'actions';
+}
+
+.submission-fields { grid-area: fields; }
+.submission-docs { grid-area: docs; }
+.submission-actions { grid-area: actions; }
+
+@media (min-width: 992px) {
+    .submission-layout.is-columns {
+        grid-template-columns: 7fr 5fr;
+        grid-template-rows: auto 1fr;
+        grid-template-areas: 'fields docs' 'actions docs';
+        row-gap: 0;
+    }
+
+    .submission-layout.is-columns .submission-docs {
+        align-self: start;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .submission-actions .btn {
+        flex: 1 1 0;
+        padding-block: 0.65rem;
+    }
+
+    .checklist-row {
+        padding: 0.75rem;
+    }
+
+    .checklist-pick {
+        padding: 0.35rem 0.65rem;
+        border: 1px solid #b9dfbb;
+        border-radius: 6px;
+        background: #fff;
+    }
+}
+
+/* On phones the ticket list shows alone, so the newest ticket shown by default on desktop is not highlighted. */
+@media (max-width: 991.98px) {
+    .ticket-card.is-default {
+        border: 1px solid var(--brgy-border);
+        background: #fff;
+    }
+}
+
+/* Filter pills span the screen on phones and keep each label on one line. */
+@media (max-width: 575.98px) {
+    .pill-group {
+        display: flex;
+        width: 100%;
+    }
+
+    .pill-group a {
+        white-space: nowrap;
+    }
+}
+
+/* ---------- Ticket thread on phones: back link, and the buttons share the width ---------- */
+.thread-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+@media (max-width: 575.98px) {
+    .message {
+        max-width: 92%;
+    }
+
+    .thread-actions .btn {
+        flex: 1 1 0;
+        padding-block: 0.6rem;
+    }
 }
