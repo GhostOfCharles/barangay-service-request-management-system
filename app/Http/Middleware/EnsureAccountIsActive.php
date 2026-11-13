@@ -36,10 +36,13 @@ class EnsureAccountIsActive
      */
     public static function inactiveMessage(User $user): string
     {
+        // Staff often end the reason with a period; drop it so the sentence doesn't show "..".
+        $reason = rtrim((string) $user->resident?->rejection_reason, " .\t\n\r");
+
         return match ($user->status) {
             AccountStatus::Pending => 'Your account is pending verification. Barangay staff will check your valid ID before you can log in.',
             AccountStatus::Rejected => 'Your registration was not approved'
-                .($user->resident?->rejection_reason ? ': '.$user->resident->rejection_reason : '')
+                .($reason !== '' ? ': '.$reason : '')
                 .'. Please visit the barangay hall or register again with a clearer valid ID.',
             default => 'This account is inactive. Please contact the Administrator.',
         };
