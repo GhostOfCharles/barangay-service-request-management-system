@@ -28,6 +28,22 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = row.dataset.href;
     });
 
+    // Print buttons and confirm-before-submit forms. These used inline onclick/onsubmit code, which the
+    // Content Security Policy blocks (see App\Http\Middleware\AddSecurityHeaders).
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('[data-print]')) {
+            window.print();
+        }
+    });
+
+    document.addEventListener('submit', (event) => {
+        const form = event.target.closest('form[data-confirm]');
+
+        if (form && !window.confirm(form.dataset.confirm)) {
+            event.preventDefault();
+        }
+    }, true);
+
     document.querySelectorAll('[data-resident-picker]').forEach(initResidentPicker);
     document.querySelectorAll('[data-submission-form]').forEach(initSubmissionForm);
     document.querySelectorAll('[data-checklist-editor]').forEach(initChecklistEditor);

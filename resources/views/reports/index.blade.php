@@ -21,7 +21,7 @@
             <p class="page-subtitle mb-0">Filtered summary of service requests</p>
         </div>
         <div class="page-actions">
-            <button type="button" class="btn btn-outline-success bg-white" onclick="window.print()"><i class="bi bi-printer"></i> Print Report</button>
+            <button type="button" class="btn btn-outline-success bg-white" data-print><i class="bi bi-printer"></i> Print Report</button>
         </div>
     </div>
 

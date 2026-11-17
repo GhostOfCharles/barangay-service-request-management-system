@@ -52,7 +52,7 @@
                         </td>
                         <td class="text-end text-nowrap">
                             <form method="POST" action="{{ route('admin.users.reset-password', $user) }}" id="reset-password-{{ $user->id }}" class="d-none"
-                                  onsubmit="return confirm('Reset the password for {{ $user->username }}? A temporary password will be issued.');">
+                                  data-confirm="Reset the password for {{ $user->username }}? A temporary password will be issued.">
                                 @csrf
                             </form>
 

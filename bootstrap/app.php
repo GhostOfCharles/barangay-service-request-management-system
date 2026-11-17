@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\EnsureRole;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', RespondWithLiveRegions::class);
         $middleware->prependToPriorityList(AuthenticatesRequests::class, RespondWithLiveRegions::class);
         $middleware->appendToGroup('web', EnsureAccountIsActive::class);
+        $middleware->append(AddSecurityHeaders::class);
 
         $middleware->alias([
             'password.changed' => EnsurePasswordIsChanged::class,

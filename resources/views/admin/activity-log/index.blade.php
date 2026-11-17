@@ -15,7 +15,7 @@
             <p class="page-subtitle mb-0">Every change made by Staff and the Administrator. Entries cannot be edited or deleted.</p>
         </div>
         <div class="page-actions is-pair d-flex gap-2">
-            <button type="button" class="btn btn-outline-success bg-white" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+            <button type="button" class="btn btn-outline-success bg-white" data-print><i class="bi bi-printer"></i> Print</button>
             <a href="{{ route('admin.activity-log.export', array_filter($filters)) }}" class="btn btn-outline-success bg-white">
                 <i class="bi bi-download"></i> Export CSV
             </a>
