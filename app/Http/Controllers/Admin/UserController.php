@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\AccountStatus;
+use App\Enums\ActivityAction;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,6 +55,10 @@ class UserController extends Controller
             'status' => AccountStatus::Active,
         ]);
 
+        ActivityLog::record($request->user(), ActivityAction::UserCreated,
+            "Created the {$user->role->label()} account {$user->username} with a temporary password.", $user,
+            ActivityLog::differences([], self::snapshot($user)));
+
         return redirect()->route('admin.users.index')
             ->with('temporaryPassword', ['username' => $user->username, 'password' => $temporaryPassword]);
     }
@@ -90,7 +96,13 @@ class UserController extends Controller
                 ->withErrors(['role' => 'You cannot remove your own Administrator role or deactivate your own account.']);
         }
 
+        $before = self::snapshot($user);
         $user->update($validated);
+        $changes = ActivityLog::differences($before, self::snapshot($user));
+
+        if ($changes) {
+            ActivityLog::record($request->user(), ActivityAction::UserUpdated, "Edited the account {$user->username}.", $user, $changes);
+        }
 
         return redirect()->route('admin.users.index')->with('success', "Account {$user->username} has been updated.");
     }
@@ -98,7 +110,7 @@ class UserController extends Controller
     /**
      * Password reset from the "Forgot Password?" flow: issues a temporary password for any account.
      */
-    public function resetPassword(User $user): RedirectResponse
+    public function resetPassword(Request $request, User $user): RedirectResponse
     {
         $temporaryPassword = $this->temporaryPassword();
 
@@ -107,8 +119,28 @@ class UserController extends Controller
             'must_change_password' => true,
         ]);
 
+        // The temporary password itself is never logged.
+        ActivityLog::record($request->user(), ActivityAction::PasswordReset,
+            "Reset the password of {$user->username} and issued a temporary password.", $user);
+
         return redirect()->route('admin.users.index')
             ->with('temporaryPassword', ['username' => $user->username, 'password' => $temporaryPassword]);
+    }
+
+    /**
+     * The fields shown in the Activity Log, by label.
+     *
+     * @return array<string, ?string>
+     */
+    private static function snapshot(User $user): array
+    {
+        return [
+            'Name' => $user->name,
+            'Username' => $user->username,
+            'Position' => $user->position,
+            'Role' => $user->role->label(),
+            'Status' => $user->status->label(),
+        ];
     }
 
     /**

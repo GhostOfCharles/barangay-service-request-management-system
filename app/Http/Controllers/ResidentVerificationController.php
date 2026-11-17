@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AccountStatus;
+use App\Enums\ActivityAction;
 use App\Enums\VerificationStatus;
+use App\Models\ActivityLog;
 use App\Models\Resident;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +19,8 @@ class ResidentVerificationController extends Controller
 {
     public function approve(Request $request, Resident $resident): RedirectResponse
     {
+        $previous = $resident->verification_status;
+
         DB::transaction(function () use ($request, $resident) {
             $resident->update([
                 'verification_status' => VerificationStatus::Verified,
@@ -27,6 +31,10 @@ class ResidentVerificationController extends Controller
 
             $resident->user?->update(['status' => AccountStatus::Active]);
         });
+
+        ActivityLog::record($request->user(), ActivityAction::ResidentApproved,
+            "Approved the registration of {$resident->full_name} and activated the account.", $resident,
+            ['Verification' => [$previous->label(), VerificationStatus::Verified->label()]]);
 
         return redirect()->route('residents.index', ['verification' => 'pending'])
             ->with('success', "{$resident->full_name} is verified. The account is now active.");
@@ -40,6 +48,8 @@ class ResidentVerificationController extends Controller
             'rejection_reason.required' => 'Please give the reason, so the resident knows what to fix.',
         ]);
 
+        $previous = $resident->verification_status;
+
         DB::transaction(function () use ($request, $resident, $validated) {
             $resident->update([
                 'verification_status' => VerificationStatus::Rejected,
@@ -50,6 +60,12 @@ class ResidentVerificationController extends Controller
 
             $resident->user?->update(['status' => AccountStatus::Rejected]);
         });
+
+        ActivityLog::record($request->user(), ActivityAction::ResidentRejected,
+            "Rejected the registration of {$resident->full_name}.", $resident, [
+                'Verification' => [$previous->label(), VerificationStatus::Rejected->label()],
+                'Reason' => [null, $validated['rejection_reason']],
+            ]);
 
         return redirect()->route('residents.index', ['verification' => 'pending'])
             ->with('success', "{$resident->full_name}'s registration was rejected. The account stays inactive.");

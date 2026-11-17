@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ActivityAction;
 use App\Enums\TicketStatus;
+use App\Models\ActivityLog;
 use App\Models\Ticket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,15 +46,25 @@ class TicketInboxController extends Controller
             'message' => ['required', 'string', 'max:2000'],
         ], ['message.required' => 'Please type a reply before sending.']);
 
+        $previous = $ticket->status;
         $ticket->reply($request->user(), $validated['message']);
+
+        ActivityLog::record($request->user(), ActivityAction::TicketReplied,
+            "Replied to {$ticket->ticket_no} ({$ticket->subject}).", $ticket,
+            ActivityLog::differences(['Status' => $previous->label()], ['Status' => $ticket->status->label()]));
 
         return redirect()->route('tickets.index', ['status' => 'answered', 'ticket' => $ticket->id])
             ->with('success', "Reply sent. {$ticket->ticket_no} is now Answered.");
     }
 
-    public function close(Ticket $ticket): RedirectResponse
+    public function close(Request $request, Ticket $ticket): RedirectResponse
     {
+        $previous = $ticket->status;
         $ticket->close();
+
+        ActivityLog::record($request->user(), ActivityAction::TicketClosed,
+            "Closed {$ticket->ticket_no} ({$ticket->subject}).", $ticket,
+            ActivityLog::differences(['Status' => $previous->label()], ['Status' => $ticket->status->label()]));
 
         return redirect()->route('tickets.index', ['status' => 'closed', 'ticket' => $ticket->id])
             ->with('success', "Ticket {$ticket->ticket_no} is closed.");

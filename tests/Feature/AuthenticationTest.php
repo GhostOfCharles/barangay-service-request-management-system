@@ -59,6 +59,43 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_rejection_message_shows_the_reason_without_a_doubled_period(): void
+    {
+        $resident = Resident::factory()->withAccount(AccountStatus::Rejected)
+            ->create(['verification_status' => 'rejected', 'rejection_reason' => 'ID photo is blurry.']);
+
+        $this->post('/login', ['username' => $resident->user->username, 'password' => 'password'])
+            ->assertSessionHasErrors(['username' => 'Your registration was not approved: ID photo is blurry. Please visit the barangay hall or register again with a clearer valid ID.']);
+    }
+
+    public function test_login_returns_to_the_page_the_user_was_opening_when_it_is_theirs(): void
+    {
+        User::factory()->create(['username' => 'frontdesk']);
+
+        $this->get('/service-requests')->assertRedirect('/login');
+
+        $this->post('/login', ['username' => 'frontdesk', 'password' => 'password'])
+            ->assertRedirect('/service-requests');
+    }
+
+    public function test_login_skips_a_saved_page_that_belongs_to_another_role(): void
+    {
+        User::factory()->create(['username' => 'frontdesk']);
+        $resident = Resident::factory()->withAccount()->create();
+
+        // An Administrator page was open in this browser before Staff logged in.
+        $this->get('/admin/service-types')->assertRedirect('/login');
+        $this->post('/login', ['username' => 'frontdesk', 'password' => 'password'])
+            ->assertRedirect(route('home'));
+
+        $this->post('/logout');
+
+        // A Staff page was open before a resident logged in.
+        $this->get('/residents')->assertRedirect('/login');
+        $this->post('/login', ['username' => $resident->user->username, 'password' => 'password'])
+            ->assertRedirect(route('home'));
+    }
+
     public function test_inactive_account_cannot_log_in(): void
     {
         User::factory()->status(AccountStatus::Inactive)->create(['username' => 'former']);

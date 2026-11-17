@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ActivityAction;
 use App\Enums\VerificationStatus;
+use App\Models\ActivityLog;
 use App\Models\Resident;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,6 +55,10 @@ class ResidentController extends Controller
             'verified_at' => now(),
         ]);
 
+        ActivityLog::record($request->user(), ActivityAction::ResidentAdded,
+            "Added {$resident->full_name} as a verified resident.", $resident,
+            ActivityLog::differences([], self::snapshot($resident)));
+
         return redirect()->route('residents.index')
             ->with('success', "Resident {$resident->full_name} has been saved.");
     }
@@ -69,6 +75,7 @@ class ResidentController extends Controller
     public function update(Request $request, Resident $resident): RedirectResponse
     {
         $validated = $this->validateResident($request, 'updateResident');
+        $before = self::snapshot($resident);
 
         if ($request->hasFile('valid_id')) {
             $validated['valid_id_path'] = $request->file('valid_id')->store('valid-ids', 'local');
@@ -77,8 +84,35 @@ class ResidentController extends Controller
         $resident->update($validated);
         $resident->user?->update(['name' => $resident->full_name]);
 
+        $changes = ActivityLog::differences($before, self::snapshot($resident));
+
+        if ($request->hasFile('valid_id')) {
+            $changes['Valid ID'] = [$before['Valid ID'], 'Replaced with a new upload'];
+        }
+
+        if ($changes) {
+            ActivityLog::record($request->user(), ActivityAction::ResidentUpdated,
+                "Edited the resident record of {$resident->full_name}.", $resident, $changes);
+        }
+
         return redirect()->route('residents.show', $resident)
             ->with('success', 'Resident record has been updated.');
+    }
+
+    /**
+     * The fields shown in the Activity Log, by label.
+     *
+     * @return array<string, ?string>
+     */
+    private static function snapshot(Resident $resident): array
+    {
+        return [
+            'Full name' => $resident->full_name,
+            'Address' => $resident->address,
+            'Purok' => $resident->purok,
+            'Contact number' => $resident->contact_number,
+            'Valid ID' => $resident->valid_id_path ? 'On file' : 'None',
+        ];
     }
 
     /**

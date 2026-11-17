@@ -1,14 +1,18 @@
 {{-- One ticket's conversation, reply box, and Close Ticket (Screens 5 and 12). Expects $ticket, $replyRoute, $closeRoute, $note, $backRoute. --}}
 <a href="{{ $backRoute }}" class="thread-back d-lg-none"><i class="bi bi-arrow-left"></i> All tickets</a>
 <div class="panel p-3 h-100" id="thread">
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    @fragment('thread-head')
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3" data-live="thread-head">
         <h2 class="h6 fw-bold mb-0">{{ $ticket->ticket_no }} — {{ $ticket->subject }}</h2>
         <x-status-badge :status="$ticket->status" kind="ticket" />
         @if ($ticket->serviceRequest)
             <span class="small text-secondary">Linked: {{ $ticket->serviceRequest->reference_no }}</span>
         @endif
     </div>
+    @endfragment
 
+    @fragment('thread-messages')
+    <div data-live="thread-messages" aria-live="polite">
     @foreach ($ticket->messages as $entry)
         @php($mine = $entry->user_id === auth()->id())
         <div @class(['message', 'is-mine' => $mine])>
@@ -19,7 +23,12 @@
             <div class="message-body">{{ $entry->message }}</div>
         </div>
     @endforeach
+    </div>
+    @endfragment
 
+    {{-- Kept as is while a reply is being typed; refreshes once the box is empty again. --}}
+    @fragment('thread-actions')
+    <div data-live="thread-actions">
     @if ($ticket->isClosed())
         <p class="text-secondary small mb-0">This ticket is closed. Open a new ticket if you need more help.</p>
     @else
@@ -57,4 +66,6 @@
             </div>
         @endpush
     @endif
+    </div>
+    @endfragment
 </div>

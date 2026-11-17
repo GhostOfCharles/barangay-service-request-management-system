@@ -65,6 +65,9 @@
                     <a class="nav-link @if (request()->routeIs('admin.users.*')) active @endif" href="{{ route('admin.users.index') }}">
                         <i class="bi bi-person-gear"></i> User Management
                     </a>
+                    <a class="nav-link @if (request()->routeIs('admin.activity-log.*')) active @endif" href="{{ route('admin.activity-log.index') }}">
+                        <i class="bi bi-journal-text"></i> Activity Log
+                    </a>
                 @endcan
             @endif
         </nav>

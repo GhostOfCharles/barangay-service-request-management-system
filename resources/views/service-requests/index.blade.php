@@ -7,7 +7,9 @@
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
         <div>
             <h1 class="page-title">Service Requests</h1>
-            <p class="page-subtitle mb-0">Search and filter all requests · {{ $totalRequests }} total</p>
+            @fragment('request-total')
+            <p class="page-subtitle mb-0" data-live="request-total">Search and filter all requests · {{ $totalRequests }} total</p>
+            @endfragment
         </div>
         <div class="page-actions">
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newRequestModal">
@@ -69,6 +71,9 @@
         </div>
     </form>
 
+    {{-- The results and pagination refresh every few seconds; filters and search are left alone. --}}
+    @fragment('request-results')
+    <div data-live="request-results">
     <div class="panel">
         <div class="table-responsive">
             <table class="table table-app">
@@ -112,6 +117,8 @@
     <p class="status-legend">Statuses: Submitted → Under Review → Approved → Cash Payment → Completed. Services with a ₱0.00 fee skip Cash Payment.</p>
 
     <div class="mt-3">{{ $serviceRequests->links() }}</div>
+    </div>
+    @endfragment
 @endsection
 
 @push('modals')

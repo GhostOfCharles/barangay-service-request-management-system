@@ -12,7 +12,9 @@
         <a href="{{ route('service-requests.index') }}" class="small text-secondary"><i class="bi bi-arrow-left"></i> Back to Service Requests</a>
     </div>
 
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    {{-- data-live regions refresh every few seconds (resources/js/live-poll.js). --}}
+    @fragment('request-header')
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3" data-live="request-header">
         <div>
             <h1 class="page-title">Request Details — {{ $serviceRequest->reference_no }}</h1>
             <p class="page-subtitle mb-0">
@@ -24,15 +26,19 @@
         </div>
         <x-status-badge :status="$serviceRequest->status" class="fs-6" />
     </div>
+    @endfragment
 
-    <div class="panel p-3 mb-3">
+    @fragment('request-tracker')
+    <div class="panel p-3 mb-3" data-live="request-tracker">
         <x-status-tracker :service-request="$serviceRequest" />
     </div>
+    @endfragment
 
     <div class="row g-3">
         <div class="col-lg-6">
             {{-- Update Status: Staff move the request one step at a time up to Cash Payment (FR-04). --}}
-            <div class="panel p-3 mb-3">
+            @fragment('request-actions')
+            <div class="panel p-3 mb-3" data-live="request-actions">
                 <h2 class="h6 fw-bold mb-3">Update Status</h2>
 
                 @if ($staffCanUpdate)
@@ -73,6 +79,7 @@
 
                 <p class="small text-secondary mt-3 mb-0">Staff may set statuses up to Cash Payment. Services with a ₱0.00 fee skip Cash Payment.</p>
             </div>
+            @endfragment
 
             <div class="panel p-3">
                 <h2 class="h6 fw-bold mb-3">Submitted Documents</h2>
@@ -95,7 +102,8 @@
             {{-- Request log: every status change and follow-up note, newest first (FR-04, FR-05). --}}
             <div class="panel p-3">
                 <h2 class="h6 fw-bold mb-3">Request Log &amp; Follow-up Notes</h2>
-                <ul class="request-log">
+                @fragment('request-log')
+                <ul class="request-log" data-live="request-log">
                     @foreach ($logEntries as $entry)
                         <li>
                             @if ($entry->entry_type === LogEntryType::Note)
@@ -108,6 +116,7 @@
                         </li>
                     @endforeach
                 </ul>
+                @endfragment
 
                 <form method="POST" action="{{ route('service-requests.notes', $serviceRequest) }}" novalidate>
                     @csrf
@@ -124,6 +133,8 @@
     </div>
 
     {{-- Phones: the next step stays pinned above the tab bar while reading the request. --}}
+    @fragment('request-action-bar')
+    <div data-live="request-action-bar">
     @if ($staffCanUpdate)
         <div class="action-bar">
             <span class="action-bar-label">Next step</span>
@@ -137,10 +148,14 @@
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirmCompleteModal">Mark Completed</button>
         </div>
     @endif
+    </div>
+    @endfragment
 @endsection
 
 @push('modals')
     {{-- Status changes cannot be undone (one step at a time), so each one is confirmed first. --}}
+    @fragment('request-dialogs')
+    <div data-live="request-dialogs">
     @if ($staffCanUpdate)
         <div class="modal fade modal-sheet" id="confirmStatusModal" tabindex="-1" aria-labelledby="confirmStatusModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -184,4 +199,6 @@
             </div>
         </div>
     @endif
+    </div>
+    @endfragment
 @endpush

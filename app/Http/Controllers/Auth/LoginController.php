@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Throwable;
 
 class LoginController extends Controller
 {
@@ -48,7 +50,36 @@ class LoginController extends Controller
             return redirect()->route('password.edit');
         }
 
-        return redirect()->intended(route('home'));
+        return redirect()->to($this->landingUrl($request, $user));
+    }
+
+    /**
+     * The page the user was trying to open before logging in, when it belongs to their role;
+     * otherwise their own dashboard. This avoids landing a Staff user on an Administrator page
+     * (403) that was open in the same browser before.
+     */
+    private function landingUrl(Request $request, User $user): string
+    {
+        $intended = $request->session()->pull('url.intended');
+
+        if (! is_string($intended)) {
+            return route('home');
+        }
+
+        try {
+            $routeName = (string) app('router')->getRoutes()->match(Request::create($intended))->getName();
+        } catch (Throwable) {
+            return route('home');
+        }
+
+        $allowed = match (true) {
+            str_starts_with($routeName, 'resident.') => $user->isResident(),
+            str_starts_with($routeName, 'admin.') => $user->isAdministrator(),
+            $routeName === 'home', str_starts_with($routeName, 'files.'), str_starts_with($routeName, 'password.') => true,
+            default => $user->isPersonnel(),
+        };
+
+        return $allowed ? $intended : route('home');
     }
 
     /**

@@ -13,7 +13,9 @@
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
         <div>
             <h1 class="page-title">Residents</h1>
-            <p class="page-subtitle mb-0">Search, add, and verify resident records · {{ $totalResidents }} on file</p>
+            @fragment('resident-total')
+            <p class="page-subtitle mb-0" data-live="resident-total">Search, add, and verify resident records · {{ $totalResidents }} on file</p>
+            @endfragment
         </div>
         <div class="page-actions">
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addResidentModal">
@@ -39,6 +41,9 @@
         </div>
     </form>
 
+    {{-- The list, pagination, and verification panel refresh every few seconds; search and filters are left alone. --}}
+    @fragment('resident-results')
+    <div data-live="resident-results">
     <div class="panel mb-3">
         <div class="table-responsive">
             <table class="table table-app">
@@ -93,8 +98,12 @@
     </div>
 
     <div class="mb-3">{{ $residents->links() }}</div>
+    </div>
+    @endfragment
 
     {{-- Verify Residency: compare the uploaded ID with the registration details (FR-09). --}}
+    @fragment('resident-verify')
+    <div data-live="resident-verify">
     @if ($reviewing)
         <div class="panel p-3" id="verify">
             <h2 class="h6 fw-bold mb-3">Verify Residency — {{ $reviewing->full_name }}</h2>
@@ -123,6 +132,13 @@
                         <dt class="col-4 text-secondary fw-normal">Username</dt><dd class="col-8">{{ $reviewing->user?->username ?? '—' }}</dd>
                         <dt class="col-4 text-secondary fw-normal">Registered</dt><dd class="col-8">{{ $reviewing->created_at->format('M j, Y g:i A') }}</dd>
                     </dl>
+                    @if ($reviewing->verification_status !== VerificationStatus::Pending)
+                        {{-- Someone else already decided while this panel was open. --}}
+                        <p class="mb-0">
+                            <x-status-badge :status="$reviewing->verification_status" kind="verification" />
+                            This registration was already {{ Str::lower($reviewing->verification_status->label()) }}{{ $reviewing->verifier ? ' by '.$reviewing->verifier->name : '' }}.
+                        </p>
+                    @else
                     <p class="text-secondary small">Compare the ID with the registration details. The account stays inactive until Staff or the Administrator approve it.</p>
 
                     <div class="d-flex flex-wrap gap-2 align-items-start">
@@ -142,10 +158,13 @@
                             @enderror
                         </form>
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
     @endif
+    </div>
+    @endfragment
 @endsection
 
 @push('modals')

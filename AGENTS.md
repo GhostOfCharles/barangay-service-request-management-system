@@ -23,6 +23,8 @@
 - Route groups use `role:resident` (resident portal under `/my`) and `role:personnel` (Staff and Administrator); Administrator-only actions use the `administer` gate.
 - Pages must stay usable on phones (about 375px wide) as well as office monitors. Follow the existing patterns: the `offcanvas-lg` sidebar, Bootstrap `d-none d-md-table-cell` to hide secondary table columns with a `.cell-sub` line under the main cell, `.page-actions` for header buttons, `.filter-bar` for filters, `modal-fullscreen-sm-down` for form modals, `data-href` on table rows, and the `<x-status-badge>`, `<x-status-tracker>`, `<x-peso>`, and `<x-submission-fields>` components.
 - `.env.example` selects MySQL. Local setup requires a running MySQL server and a database created by the developer; `composer run setup` runs migrations but does not create the database.
+- Every create or update a Staff or Administrator makes must call `ActivityLog::record()` (before → after values via `ActivityLog::differences()`) so it appears in the Administrator's Activity Log. Never log passwords or other secrets; residents' own actions are not logged. Activity log entries are append-only.
+- Pages refresh their changing parts by polling: wrap them in `@fragment('name')` with a matching `data-live="name"` element (see `resources/js/live-poll.js` and `RespondWithLiveRegions`). Keep forms outside live regions.
 - Keep credentials and local `.env` values out of tracked changes.
 
 ## Unclear requirements

@@ -7,6 +7,11 @@
     {{-- Phones show either the list or one ticket's thread; the thread only when a ticket was tapped. --}}
     @php($threadOnly = $selected && request()->filled('ticket'))
 
+    {{-- Polls keep showing the same ticket, even if a newer one would be the default. --}}
+    @if ($selected)
+        <div hidden data-live-url="{{ request()->fullUrlWithQuery(['ticket' => $selected->id]) }}"></div>
+    @endif
+
     <div @class(['d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3', 'd-none d-lg-flex' => $threadOnly])>
         <div>
             <h1 class="page-title">Support Tickets</h1>
@@ -26,10 +31,11 @@
     @else
         <div class="row g-3">
             <div @class(['col-lg-5', 'd-none d-lg-block' => $threadOnly])>
-                <div class="ticket-list">
+                @fragment('ticket-list')
+                <div class="ticket-list" data-live="ticket-list">
                     @foreach ($tickets as $ticket)
                         <a href="{{ route('resident.tickets.index', ['ticket' => $ticket->id]) }}"
-                           @class(['ticket-card', 'is-selected' => $selected?->is($ticket), 'is-default' => $selected?->is($ticket) && ! $threadOnly])
+                           @class(['ticket-card', 'is-selected' => $selected?->is($ticket)])
                            @if ($selected?->is($ticket)) aria-current="true" @endif>
                             <div class="ticket-card-title">{{ $ticket->ticket_no }} · {{ $ticket->subject }}</div>
                             <div class="ticket-card-meta">
@@ -43,6 +49,7 @@
                         </a>
                     @endforeach
                 </div>
+                @endfragment
             </div>
             <div @class(['col-lg-7', 'd-none d-lg-block' => ! $threadOnly])>
                 @if ($selected)

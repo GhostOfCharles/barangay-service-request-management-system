@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ActivityAction;
 use App\Enums\RequestStatus;
+use App\Models\ActivityLog;
 use App\Models\ServiceRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,6 +51,15 @@ class RequestStatusController extends Controller
             throw ValidationException::withMessages(['status' => $message])->errorBag('updateStatus');
         }
 
+        $previous = $serviceRequest->status;
         $serviceRequest->moveTo($status, $request->user());
+
+        ActivityLog::record(
+            $request->user(),
+            $status === RequestStatus::Completed ? ActivityAction::RequestCompleted : ActivityAction::RequestStatusChanged,
+            "Moved {$serviceRequest->reference_no} from {$previous->label()} to {$status->label()}.",
+            $serviceRequest,
+            ['Status' => [$previous->label(), $status->label()]],
+        );
     }
 }

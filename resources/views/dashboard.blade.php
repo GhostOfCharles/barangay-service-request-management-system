@@ -29,8 +29,10 @@
         </div>
     </div>
 
-    {{-- Requests by status: each card opens Service Requests with that filter applied. --}}
-    <div class="row g-3 mb-3 row-cols-2 row-cols-md-3 row-cols-xl-5 stat-grid">
+    {{-- Requests by status: each card opens Service Requests with that filter applied.
+         data-live regions refresh every few seconds (resources/js/live-poll.js). --}}
+    @fragment('dashboard-status')
+    <div class="row g-3 mb-3 row-cols-2 row-cols-md-3 row-cols-xl-5 stat-grid" data-live="dashboard-status">
         @foreach ($statusCards as [$status, $class])
             <div class="col">
                 <a href="{{ route('service-requests.index', ['status' => $status->value]) }}" class="stat-link">
@@ -50,8 +52,10 @@
             </a>
         </div>
     </div>
+    @endfragment
 
-    <div class="row g-3 mb-3 stat-grid">
+    @fragment('dashboard-queues')
+    <div class="row g-3 mb-3 stat-grid" data-live="dashboard-queues">
         <div class="col-4">
             <a href="{{ route('residents.index', ['verification' => 'pending']) }}" class="stat-link">
                 <div class="stat-card stat-pending">
@@ -77,8 +81,10 @@
             </a>
         </div>
     </div>
+    @endfragment
 
-    <div class="panel">
+    @fragment('dashboard-recent')
+    <div class="panel" data-live="dashboard-recent">
         <div class="panel-header d-flex justify-content-between align-items-center">
             <span>Recent Service Requests</span>
             <a href="{{ route('service-requests.index') }}" class="small fw-normal">View all requests</a>
@@ -117,4 +123,5 @@
             </table>
         </div>
     </div>
+    @endfragment
 @endsection
