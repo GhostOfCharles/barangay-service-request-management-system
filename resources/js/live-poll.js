@@ -9,10 +9,14 @@
  * Only regions whose HTML changed are swapped. A region is left alone (and retried on the next
  * poll) while the user is working in it: focus inside it, typed or chosen input, a validation
  * error on show, or an open dialog. In that case its smaller nested regions are updated instead.
+ *
+ * To keep server load and hosting cost low, polling pauses while the tab is hidden and after
+ * IDLE_MS without any click, key press, scroll, or touch; it catches up as soon as the user is back.
  */
 
-const INTERVAL_MS = 3000;
-const MAX_BACKOFF_MS = 30000;
+const INTERVAL_MS = 10000;
+const IDLE_MS = 5 * 60 * 1000;
+const MAX_BACKOFF_MS = 60000;
 
 /**
  * True when replacing this element would lose something the user is doing.
@@ -86,6 +90,24 @@ export function initLivePoll() {
     let controller = null;
     let failures = 0;
     let stopped = false;
+    let lastActivity = Date.now();
+    let idle = false;
+
+    function isIdle() {
+        return Date.now() - lastActivity > IDLE_MS;
+    }
+
+    // Any interaction counts as activity; coming back from idle polls right away.
+    ['pointerdown', 'keydown', 'scroll', 'touchstart', 'wheel'].forEach((type) => {
+        window.addEventListener(type, () => {
+            lastActivity = Date.now();
+
+            if (idle) {
+                idle = false;
+                schedule(0);
+            }
+        }, { passive: true, capture: true });
+    });
 
     function regionNames() {
         return [...new Set([...document.querySelectorAll('[data-live]')].map((element) => element.dataset.live))];
@@ -191,6 +213,12 @@ export function initLivePoll() {
 
     async function poll() {
         if (stopped || document.visibilityState !== 'visible') {
+            return;
+        }
+
+        if (isIdle()) {
+            idle = true; // resumes on the next interaction
+
             return;
         }
 

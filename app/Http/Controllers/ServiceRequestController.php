@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\SubmitServiceRequestAction;
 use App\Enums\ActivityAction;
 use App\Enums\RequestStatus;
 use App\Enums\VerificationStatus;
-use App\Http\Controllers\Concerns\ValidatesRequestSubmission;
+use App\Http\Requests\StaffSubmitServiceRequest;
 use App\Models\ActivityLog;
 use App\Models\Resident;
 use App\Models\ServiceRequest;
@@ -20,8 +21,6 @@ use Illuminate\View\View;
  */
 class ServiceRequestController extends Controller
 {
-    use ValidatesRequestSubmission;
-
     public function index(Request $request): View
     {
         $filters = $request->only(['search', 'service_type', 'status', 'date_from', 'date_to']);
@@ -40,7 +39,7 @@ class ServiceRequestController extends Controller
             'filters' => $filters,
             'statuses' => RequestStatus::cases(),
             'serviceTypes' => ServiceType::orderBy('name')->get(['id', 'name']),
-            'serviceTypeOptions' => $this->serviceTypeOptions(),
+            'serviceTypeOptions' => ServiceType::formOptions(),
             'residentOptions' => $residents->map(fn (Resident $resident): array => [
                 'id' => $resident->id,
                 'label' => "{$resident->full_name} ({$resident->purok})",
@@ -54,14 +53,9 @@ class ServiceRequestController extends Controller
     /**
      * Staff-assisted request for a walk-in resident (Screen 11); the reference number is generated on save.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StaffSubmitServiceRequest $request, SubmitServiceRequestAction $submitRequest): RedirectResponse
     {
-        [$validated, $files] = $this->validateSubmission($request, 'createRequest', [
-            'resident_id' => ['required', 'integer', 'exists:residents,id'],
-            'received_at' => ['required', 'date', 'before_or_equal:today'],
-        ]);
-
-        $serviceRequest = ServiceRequest::submit($validated, $request->user(), $files);
+        $serviceRequest = $submitRequest->handle($request->submissionAttributes(), $request->user(), $request->documents());
         $serviceRequest->load(['resident', 'serviceType']);
 
         ActivityLog::record($request->user(), ActivityAction::RequestCreated,

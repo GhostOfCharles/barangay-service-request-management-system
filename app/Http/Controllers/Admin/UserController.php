@@ -6,12 +6,13 @@ use App\Enums\AccountStatus;
 use App\Enums\ActivityAction;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -30,21 +31,16 @@ class UserController extends Controller
     public function create(): View
     {
         return view('admin.users.create', [
-            'roles' => self::personnelRoles(),
+            'roles' => UserRole::personnelRoles(),
         ]);
     }
 
     /**
      * New accounts get a temporary password that must be changed on first login.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreUserRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:50', 'alpha_dash', 'unique:users,username'],
-            'position' => ['nullable', 'string', 'max:100'],
-            'role' => ['required', Rule::enum(UserRole::class)->only(self::personnelRoles())],
-        ]);
+        $validated = $request->validated();
 
         $temporaryPassword = $this->temporaryPassword();
 
@@ -69,32 +65,14 @@ class UserController extends Controller
 
         return view('admin.users.edit', [
             'user' => $user,
-            'roles' => self::personnelRoles(),
+            'roles' => UserRole::personnelRoles(),
         ]);
     }
 
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        abort_if($user->isResident(), 404);
-
-        $isSelf = $request->user()->is($user);
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:50', 'alpha_dash', Rule::unique('users', 'username')->ignore($user)],
-            'position' => ['nullable', 'string', 'max:100'],
-            'role' => ['required', Rule::enum(UserRole::class)->only(self::personnelRoles())],
-            'is_active' => ['boolean'],
-        ]);
-
-        $isActive = $request->boolean('is_active');
-        unset($validated['is_active']);
-        $validated['status'] = $isActive ? AccountStatus::Active : AccountStatus::Inactive;
-
-        if ($isSelf && ($validated['role'] !== UserRole::Administrator->value || ! $isActive)) {
-            return back()->withInput()
-                ->withErrors(['role' => 'You cannot remove your own Administrator role or deactivate your own account.']);
-        }
+        $validated = $request->safe()->except('is_active');
+        $validated['status'] = $request->boolean('is_active') ? AccountStatus::Active : AccountStatus::Inactive;
 
         $before = self::snapshot($user);
         $user->update($validated);
@@ -141,14 +119,6 @@ class UserController extends Controller
             'Role' => $user->role->label(),
             'Status' => $user->status->label(),
         ];
-    }
-
-    /**
-     * @return list<UserRole>
-     */
-    private static function personnelRoles(): array
-    {
-        return [UserRole::Administrator, UserRole::Staff];
     }
 
     private function temporaryPassword(): string

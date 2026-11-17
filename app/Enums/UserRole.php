@@ -27,4 +27,14 @@ enum UserRole: string
     {
         return $this !== self::Resident;
     }
+
+    /**
+     * Roles the Administrator can give in User Management; resident accounts come only from registration.
+     *
+     * @return list<self>
+     */
+    public static function personnelRoles(): array
+    {
+        return [self::Administrator, self::Staff];
+    }
 }

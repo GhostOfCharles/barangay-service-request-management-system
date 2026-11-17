@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Resident;
 
-use App\Http\Controllers\Concerns\ValidatesRequestSubmission;
+use App\Actions\SubmitServiceRequestAction;
 use App\Http\Controllers\Controller;
-use App\Models\ServiceRequest;
+use App\Http\Requests\SubmitServiceRequest;
+use App\Models\ServiceType;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -14,23 +14,19 @@ use Illuminate\View\View;
  */
 class RequestController extends Controller
 {
-    use ValidatesRequestSubmission;
-
     public function create(): View
     {
         return view('resident.requests.create', [
-            'serviceTypeOptions' => $this->serviceTypeOptions(),
+            'serviceTypeOptions' => ServiceType::formOptions(),
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(SubmitServiceRequest $request, SubmitServiceRequestAction $submitRequest): RedirectResponse
     {
-        [$validated, $files] = $this->validateSubmission($request, 'submitRequest');
-
-        $serviceRequest = ServiceRequest::submit([
-            ...$validated,
+        $serviceRequest = $submitRequest->handle([
+            ...$request->submissionAttributes(),
             'resident_id' => $request->user()->resident->id,
-        ], $request->user(), $files);
+        ], $request->user(), $request->documents());
 
         return redirect()->route('resident.dashboard', ['track' => $serviceRequest->id])
             ->with('success', "Request submitted. Your reference number is {$serviceRequest->reference_no}.");

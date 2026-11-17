@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\ActivityAction;
 use App\Enums\RequestCategory;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ServiceTypeRequest;
 use App\Models\ActivityLog;
 use App\Models\ServiceType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -33,9 +33,9 @@ class ServiceTypeController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(ServiceTypeRequest $request): RedirectResponse
     {
-        $validated = $this->validateServiceType($request);
+        $validated = $request->validated();
 
         $serviceType = DB::transaction(function () use ($validated) {
             $serviceType = ServiceType::create(Arr::except($validated, 'documents'));
@@ -52,9 +52,9 @@ class ServiceTypeController extends Controller
             ->with('success', "{$serviceType->name} has been added.");
     }
 
-    public function update(Request $request, ServiceType $serviceType): RedirectResponse
+    public function update(ServiceTypeRequest $request, ServiceType $serviceType): RedirectResponse
     {
-        $validated = $this->validateServiceType($request, $serviceType);
+        $validated = $request->validated();
         $before = self::snapshot($serviceType);
 
         DB::transaction(function () use ($serviceType, $validated) {
@@ -108,25 +108,6 @@ class ServiceTypeController extends Controller
             'Fee' => '₱'.number_format((float) $serviceType->fee, 2),
             'Checklist' => $checklist ?: 'None',
         ];
-    }
-
-    /**
-     * @return array{name: string, category: string, fee: string, documents?: list<array{id?: ?string, name: ?string, required?: ?string}>}
-     */
-    private function validateServiceType(Request $request, ?ServiceType $serviceType = null): array
-    {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('service_types', 'name')->ignore($serviceType)],
-            'category' => ['required', Rule::enum(RequestCategory::class)],
-            'fee' => ['required', 'numeric', 'min:0', 'max:99999.99', 'decimal:0,2'],
-            'documents' => ['array'],
-            'documents.*.id' => ['nullable', 'integer'],
-            'documents.*.name' => ['nullable', 'string', 'max:255'],
-            'documents.*.required' => ['nullable', 'boolean'],
-        ], [
-            'fee.min' => 'The fee cannot be negative. Use 0.00 for a free service.',
-            'fee.decimal' => 'Enter the fee in pesos with up to two decimals, for example 50.00.',
-        ]);
     }
 
     /**

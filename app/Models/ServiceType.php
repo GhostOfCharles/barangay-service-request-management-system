@@ -67,4 +67,20 @@ class ServiceType extends Model
             ])->values()->all(),
         ];
     }
+
+    /**
+     * Every active service type as form data, for the resident and staff-assisted submission forms.
+     *
+     * @return list<array{id: int, name: string, category: string, fee: string, documents: list<array{id: int, name: string, required: bool}>}>
+     */
+    public static function formOptions(): array
+    {
+        return self::with('documentRequirements')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (self $serviceType): array => $serviceType->toFormOption())
+            ->values()
+            ->all();
+    }
 }

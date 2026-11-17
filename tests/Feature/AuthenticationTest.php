@@ -127,8 +127,8 @@ class AuthenticationTest extends TestCase
 
         $this->put('/password', [
             'current_password' => 'password',
-            'password' => 'new-secure-pass',
-            'password_confirmation' => 'new-secure-pass',
+            'password' => 'new-secure-pass-2026',
+            'password_confirmation' => 'new-secure-pass-2026',
         ]);
 
         $this->assertFalse($user->fresh()->must_change_password);

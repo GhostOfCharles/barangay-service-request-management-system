@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\ActivityAction;
 use App\Enums\VerificationStatus;
+use App\Http\Requests\StoreResidentRequest;
+use App\Http\Requests\UpdateResidentRequest;
 use App\Models\ActivityLog;
 use App\Models\Resident;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\File;
 use Illuminate\View\View;
 
 /**
@@ -43,9 +43,9 @@ class ResidentController extends Controller
     /**
      * Add New Resident (Screen 8). A resident added in person by Staff is recorded as verified.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreResidentRequest $request): RedirectResponse
     {
-        $validated = $this->validateResident($request, 'createResident');
+        $validated = $request->residentAttributes();
 
         $resident = Resident::create([
             ...$validated,
@@ -72,9 +72,9 @@ class ResidentController extends Controller
         ]);
     }
 
-    public function update(Request $request, Resident $resident): RedirectResponse
+    public function update(UpdateResidentRequest $request, Resident $resident): RedirectResponse
     {
-        $validated = $this->validateResident($request, 'updateResident');
+        $validated = $request->residentAttributes();
         $before = self::snapshot($resident);
 
         if ($request->hasFile('valid_id')) {
@@ -113,27 +113,5 @@ class ResidentController extends Controller
             'Contact number' => $resident->contact_number,
             'Valid ID' => $resident->valid_id_path ? 'On file' : 'None',
         ];
-    }
-
-    /**
-     * @return array{full_name: string, address: string, purok: string, contact_number: ?string}
-     */
-    private function validateResident(Request $request, string $errorBag): array
-    {
-        $validated = $request->validateWithBag($errorBag, [
-            'full_name' => ['required', 'string', 'max:255'],
-            'address' => ['required', 'string', 'max:255'],
-            'purok' => ['required', Rule::in(config('barangay.puroks'))],
-            'contact_number' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s()]+$/'],
-            'valid_id' => ['nullable', File::types(config('barangay.upload_mimes'))->max(config('barangay.upload_max_kb'))],
-        ], [
-            'contact_number.regex' => 'The contact number may only contain numbers, spaces, +, - and parentheses.',
-            'valid_id.mimes' => 'The valid ID must be a JPG, PNG, or PDF file.',
-            'valid_id.max' => 'The valid ID must not be larger than 5 MB.',
-        ]);
-
-        unset($validated['valid_id']);
-
-        return $validated;
     }
 }

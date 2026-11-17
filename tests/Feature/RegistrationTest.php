@@ -30,7 +30,7 @@ class RegistrationTest extends TestCase
             'address' => '12 Rizal St.',
             'purok' => 'Purok 1',
             'username' => 'cynthia',
-            'password' => 'secret-pass',
+            'password' => 'secret-pass-2026',
             'valid_id' => UploadedFile::fake()->image('id_front.jpg'),
             'privacy_consent' => '1',
             ...$overrides,
@@ -104,5 +104,49 @@ class RegistrationTest extends TestCase
 
         $this->actingAs(User::factory()->create())->get("/files/valid-ids/{$pending->id}")->assertOk();
         $this->actingAs($otherResident->user)->get("/files/valid-ids/{$pending->id}")->assertForbidden();
+    }
+
+    public function test_mobile_numbers_are_stored_as_09_numbers(): void
+    {
+        Storage::fake('local');
+
+        $this->post('/register', $this->registration(['contact_number' => '+63 917-111-2233']))->assertRedirect('/login');
+
+        $this->assertSame('09171112233', Resident::firstOrFail()->contact_number);
+    }
+
+    public function test_only_philippine_mobile_numbers_are_accepted(): void
+    {
+        Storage::fake('local');
+
+        foreach (['12345', '0817 111 2233', '0917111223', '(02) 8123 4567', '0917-111-2233 ext 5'] as $number) {
+            $this->post('/register', $this->registration(['contact_number' => $number]))
+                ->assertSessionHasErrors(['contact_number' => 'Enter a Philippine mobile number, for example 09171234567 or +639171234567.']);
+        }
+
+        $this->assertDatabaseCount('residents', 0);
+    }
+
+    public function test_passwords_need_letters_and_numbers(): void
+    {
+        Storage::fake('local');
+
+        $this->post('/register', $this->registration(['password' => 'onlyletters']))
+            ->assertSessionHasErrors(['password' => 'The password field must contain at least one number.']);
+        $this->post('/register', $this->registration(['password' => '12345678']))
+            ->assertSessionHasErrors(['password' => 'The password field must contain at least one letter.']);
+
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_staff_added_residents_use_the_same_mobile_number_rule(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->post('/residents', ['full_name' => 'Ramos, Liza', 'address' => '15 Gomez St.', 'purok' => 'Purok 2', 'contact_number' => '555-0100'])
+            ->assertSessionHasErrorsIn('createResident', 'contact_number');
+
+        $this->post('/residents', ['full_name' => 'Ramos, Liza', 'address' => '15 Gomez St.', 'purok' => 'Purok 2', 'contact_number' => ''])
+            ->assertSessionDoesntHaveErrors();
+        $this->assertNull(Resident::firstOrFail()->contact_number);
     }
 }

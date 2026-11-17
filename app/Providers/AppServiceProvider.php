@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +27,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+
+        // Passwords chosen by users (registration, Change Password): 8+ characters with letters and numbers.
+        // On the live site they are also checked against known data breaches (Have I Been Pwned, which only
+        // receives the first 5 characters of the password's SHA-1 hash).
+        Password::defaults(function (): Password {
+            $rule = Password::min(8)->letters()->numbers();
+
+            return $this->app->isProduction() ? $rule->uncompromised() : $rule;
+        });
 
         // Administrator only: user accounts, service types/fees/checklists, and Mark Completed.
         Gate::define('administer', fn (User $user): bool => $user->isAdministrator());

@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Actions\SubmitServiceRequestAction;
 use App\Enums\AccountStatus;
 use App\Enums\RequestStatus;
 use App\Enums\UserRole;
 use App\Enums\VerificationStatus;
 use App\Models\Resident;
-use App\Models\ServiceRequest;
 use App\Models\ServiceType;
 use App\Models\Ticket;
 use App\Models\User;
@@ -121,7 +121,7 @@ class DemoDataSeeder extends Seeder
                 $requirement->id => $this->sampleUpload("Sample {$requirement->document_name}: {$residentName}"),
             ])->all();
 
-            $serviceRequest = ServiceRequest::submit([
+            $serviceRequest = app(SubmitServiceRequestAction::class)->handle([
                 'resident_id' => $residents[$residentName]->id,
                 'service_type_id' => $serviceType->id,
                 'purpose' => $purpose,
