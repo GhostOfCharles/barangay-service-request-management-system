@@ -22,9 +22,22 @@ use Illuminate\Support\Facades\Storage;
  */
 class DemoDataSeeder extends Seeder
 {
+    /**
+     * Login accounts this seeder creates (also used by `php artisan demo:setup`).
+     */
+    public const DEMO_USERNAMES = ['demoadmin', 'staff', 'resident', 'ramon', 'liza'];
+
+    /**
+     * Runs once: skipped when any demo account already exists, so real or test records are never duplicated.
+     */
+    public static function alreadySeeded(): bool
+    {
+        return User::whereIn('username', self::DEMO_USERNAMES)->exists();
+    }
+
     public function run(): void
     {
-        if (Resident::query()->exists()) {
+        if (self::alreadySeeded()) {
             return;
         }
 
