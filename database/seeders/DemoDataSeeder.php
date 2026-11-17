@@ -165,7 +165,7 @@ class DemoDataSeeder extends Seeder
     private function samplePdf(string $folder, string $text): string
     {
         $path = $folder.'/sample-'.uniqid().'.pdf';
-        Storage::disk('local')->put($path, self::pdfWithText($text));
+        Storage::disk()->put($path, self::pdfWithText($text));
 
         return $path;
     }

@@ -113,7 +113,7 @@ class ServiceRequest extends Model
                     $serviceRequest->documents()->create([
                         'document_requirement_id' => $requirement->id,
                         'document_name' => $requirement->document_name,
-                        'file_path' => $file->store("request-documents/{$serviceRequest->reference_no}", 'local'),
+                        'file_path' => $file->store("request-documents/{$serviceRequest->reference_no}"),
                         'original_name' => $file->getClientOriginalName(),
                         'file_size' => $file->getSize(),
                     ]);

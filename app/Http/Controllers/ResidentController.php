@@ -49,7 +49,7 @@ class ResidentController extends Controller
 
         $resident = Resident::create([
             ...$validated,
-            'valid_id_path' => $request->file('valid_id')?->store('valid-ids', 'local'),
+            'valid_id_path' => $request->file('valid_id')?->store('valid-ids'),
             'verification_status' => VerificationStatus::Verified,
             'verified_by' => $request->user()->id,
             'verified_at' => now(),
@@ -78,7 +78,7 @@ class ResidentController extends Controller
         $before = self::snapshot($resident);
 
         if ($request->hasFile('valid_id')) {
-            $validated['valid_id_path'] = $request->file('valid_id')->store('valid-ids', 'local');
+            $validated['valid_id_path'] = $request->file('valid_id')->store('valid-ids');
         }
 
         $resident->update($validated);

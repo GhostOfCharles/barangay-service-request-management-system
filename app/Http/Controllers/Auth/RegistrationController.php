@@ -63,7 +63,7 @@ class RegistrationController extends Controller
                 'address' => $validated['address'],
                 'purok' => $validated['purok'],
                 'contact_number' => $validated['contact_number'],
-                'valid_id_path' => $request->file('valid_id')->store('valid-ids', 'local'),
+                'valid_id_path' => $request->file('valid_id')->store('valid-ids'),
                 'verification_status' => VerificationStatus::Pending,
                 'privacy_consent_at' => now(),
             ]);
